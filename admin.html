@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Konfigurasi Sekolah &amp; Logo Piagam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Public+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+/* =========================================================
+   GANTI INI DENGAN URL WEB APP APPS SCRIPT KAMU
+   (Harus sama persis dengan yang dipakai di index.html)
+   ========================================================= */
+const API_URL = "https://script.google.com/macros/s/AKfycbwc8u0_6420FLWOeFGJ3ZARO6nvOlj1yULKw5LxLuszv7E-sRt38byI1UuIG0xCuj5P/exec";
+</script>
+
+<style>
+  :root{
+    --ink:#1b2a4a;
+    --ink-soft:#4a5878;
+    --paper:#f7f3ea;
+    --paper-raised:#ffffff;
+    --gold:#c08a3e;
+    --gold-soft:#e8d7b8;
+    --green:#3f6b4f;
+    --red:#a23b3b;
+    --border:#dcd3c0;
+    --radius:14px;
+    --shadow: 0 1px 2px rgba(27,42,74,0.06), 0 8px 24px rgba(27,42,74,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #fffdf7 0%, transparent 60%),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Public Sans', system-ui, sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:32px 16px 80px;
+  }
+  h1,h2{ font-family:'Fraunces', serif; margin:0; letter-spacing:-0.01em; }
+  #app{ width:100%; max-width:620px; }
+
+  .header{
+    background:var(--ink);
+    color:#fff;
+    border-radius:var(--radius) var(--radius) 0 0;
+    padding:22px 26px;
+  }
+  .header .eyebrow{
+    font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--gold-soft); font-weight:700; margin-bottom:6px;
+  }
+  .header h1{ font-size:23px; font-weight:600; }
+  .header p{ margin:8px 0 0; font-size:13.5px; color:#c9d0e0; line-height:1.5; }
+
+  .card{
+    background:var(--paper-raised);
+    border:1px solid var(--border);
+    border-radius:0 0 var(--radius) var(--radius);
+    box-shadow:var(--shadow);
+    padding:28px 26px;
+  }
+
+  .section-title{
+    font-size:13px; font-weight:700; text-transform:uppercase;
+    letter-spacing:0.06em; color:var(--gold); margin:24px 0 12px;
+  }
+  .section-title:first-child{ margin-top:0; }
+
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block; font-size:13px; font-weight:600;
+    color:var(--ink-soft); margin-bottom:6px;
+  }
+  .field .hint{
+    font-size:12px; color:var(--ink-soft); margin-top:5px; line-height:1.5;
+  }
+  .field input[type="text"], .field select{
+    width:100%; padding:11px 13px; border:1.5px solid var(--border);
+    border-radius:9px; font-size:15px; font-family:inherit;
+    background:#fdfcf9; color:var(--ink);
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--gold); }
+
+  .upload-box{
+    border:1.5px dashed var(--border);
+    border-radius:10px;
+    padding:16px;
+    background:#fdfcf9;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .upload-box:hover{ border-color:var(--gold); background:#fbf6ea; }
+  .upload-box input{ display:none; }
+  .upload-preview{
+    width:48px; height:48px; border-radius:8px;
+    background:var(--border);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden; flex-shrink:0;
+  }
+  .upload-preview img{ width:100%; height:100%; object-fit:contain; }
+  .upload-text{ font-size:13.5px; color:var(--ink-soft); }
+  .upload-text b{ color:var(--ink); }
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; padding:13px 18px; border:none; border-radius:9px;
+    background:var(--ink); color:#fff; font-family:inherit; font-size:15px;
+    font-weight:600; cursor:pointer; transition:background .15s;
+    margin-top:8px;
+  }
+  .btn:hover{ background:#243a63; }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+
+  .alert{ padding:12px 14px; border-radius:8px; font-size:13.5px; margin-bottom:16px; }
+  .alert-error{ background:#f7e8e6; color:var(--red); border:1px solid #e5bcb6; }
+  .alert-success{ background:#e6f0e9; color:var(--green); border:1px solid #b9d9c3; }
+
+  .spinner{
+    width:16px; height:16px; border:2.5px solid rgba(255,255,255,0.4);
+    border-top-color:#fff; border-radius:50%;
+    animation:spin .7s linear infinite; display:inline-block;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+
+<script>
+const state = {
+  logos: { logoKab:null, logoGugus:null, logoSekolah:null },
+  submitting: false,
+  message: null // { type: 'error'|'success', text }
+};
+
+const app = document.getElementById("app");
+
+function render(){
+  app.innerHTML = `
+    <div class="header">
+      <div class="eyebrow">Halaman Admin</div>
+      <h1>Konfigurasi Sekolah &amp; Logo Piagam</h1>
+      <p>Isi data sekolah dan upload logo di sini. Sistem otomatis menyimpannya ke Google Drive dan mengisi sheet Konfigurasi — tidak perlu cari File ID manual.</p>
+    </div>
+    <div class="card">
+      ${state.message ? `<div class="alert alert-${state.message.type === 'error' ? 'error' : 'success'}">${escapeHtml(state.message.text)}</div>` : ""}
+
+      <form id="formAdmin">
+        <div class="section-title">Data Sekolah</div>
+
+        <div class="field">
+          <label for="sekolah">Nama Sekolah</label>
+          <input type="text" id="sekolah" required placeholder="Contoh: SDN 4 Jakarta (harus sama persis dengan yang diisi siswa)">
+        </div>
+        <div class="field">
+          <label for="kepsek">Nama Kepala Sekolah</label>
+          <input type="text" id="kepsek" placeholder="Contoh: Budi Santoso, S.Pd">
+        </div>
+        <div class="field">
+          <label for="nip">NIP Kepala Sekolah</label>
+          <input type="text" id="nip" placeholder="Contoh: 196501011990031001">
+        </div>
+        <div class="field">
+          <label for="tempat">Tempat (untuk tanggal piagam)</label>
+          <input type="text" id="tempat" placeholder="Contoh: Jakarta">
+        </div>
+
+        <div class="section-title">Logo Piagam</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:16px;">Kosongkan kalau logonya sudah pernah diupload sebelumnya dan tidak mau diganti.</p>
+
+        ${renderUploadField("logoKab", "Logo Kabupaten / Kota")}
+        ${renderUploadField("logoGugus", "Logo Gugus")}
+        ${renderUploadField("logoSekolah", "Logo Sekolah")}
+
+        <button type="submit" class="btn" id="btnSubmit" ${state.submitting ? "disabled" : ""}>
+          ${state.submitting ? `<span class="spinner"></span> Menyimpan...` : "Simpan Konfigurasi"}
+        </button>
+      </form>
+    </div>
+  `;
+
+  document.getElementById("formAdmin").addEventListener("submit", handleSubmit);
+
+  ["logoKab","logoGugus","logoSekolah"].forEach(key=>{
+    const input = document.getElementById("input_"+key);
+    input.addEventListener("change", (e)=> handleFileSelect(key, e.target.files[0]));
+  });
+}
+
+function renderUploadField(key, label){
+  const file = state.logos[key];
+  return `
+    <div class="field">
+      <label>${label}</label>
+      <label class="upload-box" for="input_${key}">
+        <div class="upload-preview" id="preview_${key}">
+          ${file ? `<img src="${file.dataUrl}">` : "🖼️"}
+        </div>
+        <div class="upload-text">
+          ${file ? `<b>${escapeHtml(file.name)}</b><br>Klik untuk ganti` : `<b>Klik untuk pilih gambar</b><br>PNG atau JPG`}
+        </div>
+        <input type="file" id="input_${key}" accept="image/png,image/jpeg">
+      </label>
+    </div>
+  `;
+}
+
+function handleFileSelect(key, file){
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    state.logos[key] = {
+      name: file.name,
+      mime: file.type,
+      dataUrl: reader.result,
+      base64: reader.result.split(",")[1]
+    };
+    render();
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleSubmit(e){
+  e.preventDefault();
+
+  const payload = {
+    sekolah: document.getElementById("sekolah").value.trim(),
+    kepsek: document.getElementById("kepsek").value.trim(),
+    nip: document.getElementById("nip").value.trim(),
+    tempat: document.getElementById("tempat").value.trim()
+  };
+
+  if(state.logos.logoKab){
+    payload.logoKabBase64 = state.logos.logoKab.base64;
+    payload.logoKabMime = state.logos.logoKab.mime;
+  }
+  if(state.logos.logoGugus){
+    payload.logoGugusBase64 = state.logos.logoGugus.base64;
+    payload.logoGugusMime = state.logos.logoGugus.mime;
+  }
+  if(state.logos.logoSekolah){
+    payload.logoSekolahBase64 = state.logos.logoSekolah.base64;
+    payload.logoSekolahMime = state.logos.logoSekolah.mime;
+  }
+
+  if(!payload.sekolah){
+    state.message = { type:"error", text:"Nama sekolah wajib diisi." };
+    render();
+    return;
+  }
+
+  if(!API_URL || API_URL.indexOf("GANTI_DENGAN") === 0){
+    state.message = { type:"error", text:"API_URL belum diisi di dalam file admin.html." };
+    render();
+    return;
+  }
+
+  state.submitting = true;
+  state.message = null;
+  render();
+
+  try{
+    const res = await fetch(API_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify({ action:"saveKonfigurasi", data: payload })
+    });
+    const result = await res.json();
+
+    if(result.status === "error"){
+      throw new Error(result.message || "Gagal menyimpan konfigurasi.");
+    }
+
+    state.message = { type:"success", text:"Konfigurasi & logo berhasil disimpan. Coba generate piagam untuk melihat hasilnya." };
+    state.logos = { logoKab:null, logoGugus:null, logoSekolah:null };
+
+  }catch(err){
+    state.message = { type:"error", text: err.message || "Terjadi kesalahan." };
+  }
+
+  state.submitting = false;
+  render();
+}
+
+function escapeHtml(str){
+  if(str === undefined || str === null) return "";
+  return String(str)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+render();
+</script>
+</body>
+</html>
