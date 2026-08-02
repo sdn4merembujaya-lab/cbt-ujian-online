@@ -3,28 +3,722 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ujian Berbasis Komputer</title>
+<title>CBT — Ujian Online</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Public+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
 <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow: hidden;
-  }
-  iframe {
-    width: 100%;
-    height: 100vh;
-    border: none;
-    display: block;
-  }
+  /* ====== KONFIGURASI ====== */
+  /* Ganti nilai di bawah dengan URL Web App hasil deploy Apps Script kamu */
+  /* Contoh: https://script.google.com/macros/s/AKfycb.../exec */
 </style>
 </head>
 <body>
-  <!-- Ganti URL di bawah kalau suatu saat deploy ulang dan URL /exec berubah -->
-  <iframe
-    src="https://script.google.com/macros/s/AKfycbwc8u0_6420FLWOeFGJ3ZARO6nvOlj1yULKw5LxLuszv7E-sRt38byI1UuIG0xCuj5P/exec"
-    title="Ujian Berbasis Komputer"
-    allow="clipboard-write"
-  ></iframe>
+
+<div id="app"></div>
+
+<script>
+/* =========================================================
+   GANTI INI DENGAN URL WEB APP APPS SCRIPT KAMU
+   (Deploy > New deployment > Web app > Copy URL)
+   ========================================================= */
+const API_URL = "https://script.google.com/macros/s/AKfycbwc8u0_6420FLWOeFGJ3ZARO6nvOlj1yULKw5LxLuszv7E-sRt38byI1UuIG0xCuj5P/exec";
+</script>
+
+<style>
+  :root{
+    --ink:#1b2a4a;
+    --ink-soft:#4a5878;
+    --paper:#f7f3ea;
+    --paper-raised:#ffffff;
+    --gold:#c08a3e;
+    --gold-soft:#e8d7b8;
+    --green:#3f6b4f;
+    --red:#a23b3b;
+    --border:#dcd3c0;
+    --radius:14px;
+    --shadow: 0 1px 2px rgba(27,42,74,0.06), 0 8px 24px rgba(27,42,74,0.08);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+
+  body{
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #fffdf7 0%, transparent 60%),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Public Sans', system-ui, sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:32px 16px 80px;
+  }
+
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+
+  #app{
+    width:100%;
+    max-width:640px;
+  }
+
+  /* ---------- KARTU UJIAN (header identitas) ---------- */
+  .ticket{
+    background:var(--ink);
+    color:#f7f3ea;
+    border-radius:var(--radius) var(--radius) 0 0;
+    padding:22px 26px;
+    position:relative;
+    overflow:hidden;
+  }
+  .ticket::after{
+    content:"";
+    position:absolute;
+    left:-10px; right:-10px; bottom:-14px;
+    height:28px;
+    background-image: radial-gradient(circle, var(--paper) 7px, transparent 7.5px);
+    background-size: 24px 28px;
+    background-position: 0 0;
+  }
+  .ticket-eyebrow{
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--gold-soft);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .ticket h1{
+    font-size:26px;
+    font-weight:600;
+    color:#fff;
+  }
+  .ticket-meta{
+    display:flex;
+    gap:18px;
+    margin-top:10px;
+    font-size:13px;
+    color:#c9d0e0;
+  }
+  .ticket-meta b{color:#fff; font-weight:600;}
+
+  .card{
+    background:var(--paper-raised);
+    border:1px solid var(--border);
+    border-top:none;
+    border-radius:0 0 var(--radius) var(--radius);
+    box-shadow:var(--shadow);
+    padding:30px 26px 26px;
+  }
+
+  /* ---------- FORM ---------- */
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .field input, .field select{
+    width:100%;
+    padding:11px 13px;
+    border:1.5px solid var(--border);
+    border-radius:9px;
+    font-size:15px;
+    font-family:inherit;
+    background:#fdfcf9;
+    color:var(--ink);
+    transition:border-color .15s;
+  }
+  .field input:focus, .field select:focus{
+    outline:none;
+    border-color:var(--gold);
+  }
+  .field-error{
+    font-size:12px;
+    color:var(--red);
+    margin-top:5px;
+    display:none;
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    width:100%;
+    padding:13px 18px;
+    border:none;
+    border-radius:9px;
+    background:var(--ink);
+    color:#fff;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+    transition:transform .1s, background .15s;
+  }
+  .btn:hover{background:#243a63;}
+  .btn:active{transform:scale(0.98);}
+  .btn:disabled{opacity:0.5; cursor:not-allowed;}
+  .btn-ghost{
+    background:transparent;
+    color:var(--ink-soft);
+    border:1.5px solid var(--border);
+  }
+  .btn-ghost:hover{background:#f2ede0; color:var(--ink);}
+  .btn-row{display:flex; gap:10px;}
+  .btn-row .btn{width:auto; flex:1;}
+
+  /* ---------- SOAL ---------- */
+  .progress-wrap{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:20px;
+  }
+  .progress-track{
+    flex:1;
+    height:6px;
+    background:var(--border);
+    border-radius:99px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--gold);
+    border-radius:99px;
+    transition:width .3s ease;
+  }
+  .progress-label{
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .reading-text{
+    background:#f2ede0;
+    border-left:3px solid var(--gold);
+    padding:14px 16px;
+    border-radius:6px;
+    font-size:14px;
+    line-height:1.6;
+    color:var(--ink-soft);
+    margin-bottom:18px;
+    max-height:180px;
+    overflow-y:auto;
+  }
+
+  .question-text{
+    font-size:18px;
+    font-weight:600;
+    line-height:1.5;
+    margin-bottom:20px;
+  }
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:26px;
+  }
+  .option{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:13px 15px;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+    background:#fdfcf9;
+  }
+  .option:hover{border-color:var(--gold-soft); background:#fbf6ea;}
+  .option.selected{
+    border-color:var(--gold);
+    background:#fbf1dd;
+  }
+  .option-letter{
+    flex-shrink:0;
+    width:26px; height:26px;
+    border-radius:50%;
+    background:var(--border);
+    color:var(--ink-soft);
+    font-size:12px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-transform:uppercase;
+  }
+  .option.selected .option-letter{
+    background:var(--gold);
+    color:#fff;
+  }
+  .option-text{font-size:14.5px; line-height:1.5; padding-top:3px;}
+
+  /* ---------- HASIL ---------- */
+  .result-hero{
+    text-align:center;
+    padding:12px 0 22px;
+  }
+  .result-score{
+    font-family:'Fraunces', serif;
+    font-size:64px;
+    font-weight:700;
+    color:var(--ink);
+    line-height:1;
+    margin:14px 0 6px;
+  }
+  .result-predikat{
+    display:inline-block;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--green);
+    background:#e6f0e9;
+    padding:5px 14px;
+    border-radius:99px;
+  }
+  .result-stats{
+    display:flex;
+    justify-content:center;
+    gap:28px;
+    margin-top:22px;
+    padding-top:20px;
+    border-top:1px dashed var(--border);
+  }
+  .result-stat{text-align:center;}
+  .result-stat .num{font-size:20px; font-weight:700; color:var(--ink);}
+  .result-stat .lbl{font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.06em; margin-top:2px;}
+
+  .piagam-box{
+    margin-top:24px;
+    padding:16px;
+    border-radius:10px;
+    background:#fbf6ea;
+    border:1.5px solid var(--gold-soft);
+    text-align:center;
+  }
+  .piagam-box a{
+    color:var(--ink);
+    font-weight:700;
+    text-decoration:none;
+    border-bottom:2px solid var(--gold);
+  }
+
+  /* ---------- MISC ---------- */
+  .center-text{text-align:center;}
+  .muted{color:var(--ink-soft); font-size:14px; line-height:1.6;}
+  .spinner{
+    width:34px; height:34px;
+    border:3px solid var(--border);
+    border-top-color:var(--gold);
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+    margin:0 auto 16px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .alert{
+    padding:12px 14px;
+    border-radius:8px;
+    font-size:13.5px;
+    margin-bottom:16px;
+  }
+  .alert-error{background:#f7e8e6; color:var(--red); border:1px solid #e5bcb6;}
+
+  @media (max-width:480px){
+    .ticket h1{font-size:21px;}
+    .result-score{font-size:52px;}
+    body{padding:16px 10px 60px;}
+  }
+</style>
+
+<script>
+/* =========================================================
+   STATE
+   ========================================================= */
+const state = {
+  screen: "start",       // start | loading | exam | submitting | result | error
+  bankSoal: null,
+  siswa: { nama:"", nisn:"", sekolah:"", mapel:"" },
+  daftarMapel: [],
+  soal: [],
+  currentIndex: 0,
+  jawaban: {},            // { soalId: 'a'|'b'|'c'|'d' }
+  startTime: null,
+  hasil: null,
+  errorMsg: ""
+};
+
+const app = document.getElementById("app");
+
+/* =========================================================
+   API HELPERS
+   ========================================================= */
+async function fetchBankSoal(){
+  const res = await fetch(API_URL);
+  if(!res.ok) throw new Error("Gagal memuat soal (HTTP " + res.status + ")");
+  const data = await res.json();
+  if(data && data.status === "error") throw new Error(data.message || "Gagal memuat soal");
+  return data;
+}
+
+async function submitRekap(payload){
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action:"saveRekap", data: payload })
+  });
+  const data = await res.json();
+  if(data.status === "error") throw new Error(data.message || "Gagal menyimpan hasil ujian");
+  return data;
+}
+
+/* =========================================================
+   RENDER: START SCREEN
+   ========================================================= */
+function renderStart(){
+  const mapelOptions = state.daftarMapel.length
+    ? state.daftarMapel.map(m => `<option value="${m}">${capitalize(m)}</option>`).join("")
+    : `<option value="">(Belum ada mapel tersedia)</option>`;
+
+  app.innerHTML = `
+    <div class="ticket">
+      <div class="ticket-eyebrow">Kartu Peserta Ujian</div>
+      <h1>Ujian Berbasis Komputer</h1>
+      <div class="ticket-meta"><span>Isi data diri untuk memulai</span></div>
+    </div>
+    <div class="card">
+      ${state.errorMsg ? `<div class="alert alert-error">${escapeHtml(state.errorMsg)}</div>` : ""}
+      <form id="formStart">
+        <div class="field">
+          <label for="nama">Nama Lengkap</label>
+          <input type="text" id="nama" required placeholder="Contoh: Siti Aminah">
+        </div>
+        <div class="field">
+          <label for="nisn">NISN</label>
+          <input type="text" id="nisn" required placeholder="Contoh: 0123456789" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label for="sekolah">Asal Sekolah</label>
+          <input type="text" id="sekolah" required placeholder="Contoh: SDN 1 Contoh">
+        </div>
+        <div class="field">
+          <label for="mapel">Mata Pelajaran</label>
+          <select id="mapel" required>
+            <option value="" disabled selected>Pilih mata pelajaran</option>
+            ${mapelOptions}
+          </select>
+        </div>
+        <button type="submit" class="btn">Mulai Ujian</button>
+      </form>
+    </div>
+  `;
+
+  document.getElementById("formStart").addEventListener("submit", (e)=>{
+    e.preventDefault();
+    state.siswa.nama = document.getElementById("nama").value.trim();
+    state.siswa.nisn = document.getElementById("nisn").value.trim();
+    state.siswa.sekolah = document.getElementById("sekolah").value.trim();
+    state.siswa.mapel = document.getElementById("mapel").value;
+
+    if(!state.siswa.mapel){
+      state.errorMsg = "Silakan pilih mata pelajaran.";
+      renderStart();
+      return;
+    }
+
+    const daftarSoal = state.bankSoal[state.siswa.mapel];
+    if(!daftarSoal || daftarSoal.length === 0){
+      state.errorMsg = "Belum ada soal untuk mata pelajaran ini.";
+      renderStart();
+      return;
+    }
+
+    state.soal = daftarSoal;
+    state.currentIndex = 0;
+    state.jawaban = {};
+    state.startTime = Date.now();
+    state.errorMsg = "";
+    state.screen = "exam";
+    render();
+  });
+}
+
+/* =========================================================
+   RENDER: LOADING
+   ========================================================= */
+function renderLoading(msg){
+  app.innerHTML = `
+    <div class="card center-text" style="border-radius:var(--radius); border-top:1px solid var(--border);">
+      <div class="spinner"></div>
+      <p class="muted">${escapeHtml(msg || "Memuat...")}</p>
+    </div>
+  `;
+}
+
+/* =========================================================
+   RENDER: EXAM
+   ========================================================= */
+function renderExam(){
+  const total = state.soal.length;
+  const idx = state.currentIndex;
+  const soal = state.soal[idx];
+  const terjawab = Object.keys(state.jawaban).length;
+  const percent = Math.round(((idx) / total) * 100);
+  const selected = state.jawaban[soal.id];
+
+  app.innerHTML = `
+    <div class="ticket">
+      <div class="ticket-eyebrow">${escapeHtml(capitalize(state.siswa.mapel))}</div>
+      <h1>${escapeHtml(state.siswa.nama)}</h1>
+      <div class="ticket-meta">
+        <span>NISN <b>${escapeHtml(state.siswa.nisn)}</b></span>
+        <span>Terjawab <b>${terjawab}/${total}</b></span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div>
+        <div class="progress-label">Soal ${idx+1} / ${total}</div>
+      </div>
+
+      ${soal.readingText ? `<div class="reading-text">${escapeHtml(soal.readingText)}</div>` : ""}
+
+      <div class="question-text">${escapeHtml(soal.question)}</div>
+
+      <div class="options" id="optionsWrap">
+        ${soal.options.map(opt => `
+          <div class="option ${selected === opt.id ? "selected" : ""}" data-id="${opt.id}">
+            <div class="option-letter">${opt.id}</div>
+            <div class="option-text">${escapeHtml(opt.text)}</div>
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btnPrev" ${idx===0 ? "disabled" : ""}>Sebelumnya</button>
+        <button class="btn" id="btnNext">${idx === total-1 ? "Selesai Ujian" : "Selanjutnya"}</button>
+      </div>
+    </div>
+  `;
+
+  document.querySelectorAll(".option").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      state.jawaban[soal.id] = el.getAttribute("data-id");
+      renderExam();
+    });
+  });
+
+  document.getElementById("btnPrev").addEventListener("click", ()=>{
+    if(state.currentIndex > 0){
+      state.currentIndex--;
+      renderExam();
+    }
+  });
+
+  document.getElementById("btnNext").addEventListener("click", ()=>{
+    if(idx === total-1){
+      finishExam();
+    } else {
+      state.currentIndex++;
+      renderExam();
+    }
+  });
+}
+
+/* =========================================================
+   SELESAI UJIAN -> HITUNG NILAI -> KIRIM KE SERVER
+   ========================================================= */
+async function finishExam(){
+  const total = state.soal.length;
+  let benar = 0;
+
+  state.soal.forEach(s=>{
+    const jawabSiswa = state.jawaban[s.id];
+    if(jawabSiswa && jawabSiswa === s.correctAnswer){
+      benar++;
+    }
+  });
+
+  const nilai = Math.round((benar / total) * 100);
+  const detikTempuh = Math.round((Date.now() - state.startTime) / 1000);
+  const waktuTempuh = formatDurasi(detikTempuh);
+
+  state.hasil = { benar, total, nilai, waktuTempuh };
+
+  state.screen = "submitting";
+  render();
+
+  try{
+    const res = await submitRekap({
+      nama: state.siswa.nama,
+      nisn: state.siswa.nisn,
+      sekolah: state.siswa.sekolah,
+      mapel: state.siswa.mapel,
+      benar: benar,
+      total: total,
+      nilai: nilai,
+      waktu: waktuTempuh
+    });
+    state.hasil.piagamUrl = res.piagamUrl || "";
+    state.screen = "result";
+    render();
+  }catch(err){
+    // Nilai tetap ditampilkan walau gagal simpan ke server
+    state.hasil.piagamUrl = "";
+    state.hasil.saveError = err.message;
+    state.screen = "result";
+    render();
+  }
+}
+
+/* =========================================================
+   RENDER: RESULT
+   ========================================================= */
+function renderResult(){
+  const h = state.hasil;
+  const predikat = getPredikat(h.nilai);
+
+  app.innerHTML = `
+    <div class="ticket">
+      <div class="ticket-eyebrow">Hasil Ujian</div>
+      <h1>${escapeHtml(state.siswa.nama)}</h1>
+      <div class="ticket-meta">
+        <span>${escapeHtml(capitalize(state.siswa.mapel))}</span>
+        <span>${escapeHtml(state.siswa.sekolah)}</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="result-hero">
+        <div class="muted">Nilai Akhir</div>
+        <div class="result-score">${h.nilai}</div>
+        <div class="result-predikat">${predikat}</div>
+
+        <div class="result-stats">
+          <div class="result-stat">
+            <div class="num">${h.benar}/${h.total}</div>
+            <div class="lbl">Jawaban Benar</div>
+          </div>
+          <div class="result-stat">
+            <div class="num">${h.waktuTempuh}</div>
+            <div class="lbl">Waktu Tempuh</div>
+          </div>
+        </div>
+      </div>
+
+      ${h.piagamUrl ? `
+        <div class="piagam-box">
+          <div class="muted" style="margin-bottom:8px;">Piagam kelulusan sudah dibuat</div>
+          <a href="${h.piagamUrl}" target="_blank" rel="noopener">Buka & Unduh Piagam →</a>
+        </div>
+      ` : `
+        <div class="piagam-box">
+          <div class="muted">Nilai tersimpan${h.saveError ? " secara lokal, namun piagam belum dapat dibuat" : ""}. ${h.saveError ? "" : "Piagam akan segera tersedia."}</div>
+        </div>
+      `}
+
+      <button class="btn btn-ghost" style="margin-top:20px;" id="btnUlang">Ujian Mata Pelajaran Lain</button>
+    </div>
+  `;
+
+  document.getElementById("btnUlang").addEventListener("click", ()=>{
+    state.siswa.mapel = "";
+    state.errorMsg = "";
+    state.screen = "start";
+    render();
+  });
+}
+
+/* =========================================================
+   RENDER: ERROR (gagal ambil soal dari server)
+   ========================================================= */
+function renderFatalError(){
+  app.innerHTML = `
+    <div class="card center-text" style="border-radius:var(--radius); border-top:1px solid var(--border);">
+      <h2 style="margin-bottom:10px;">Tidak dapat memuat ujian</h2>
+      <p class="muted" style="margin-bottom:20px;">${escapeHtml(state.errorMsg)}</p>
+      <button class="btn" id="btnRetry">Coba Lagi</button>
+    </div>
+  `;
+  document.getElementById("btnRetry").addEventListener("click", init);
+}
+
+/* =========================================================
+   UTIL
+   ========================================================= */
+function capitalize(str){
+  if(!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+function escapeHtml(str){
+  if(str === undefined || str === null) return "";
+  return String(str)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function formatDurasi(detik){
+  const m = Math.floor(detik/60);
+  const s = detik%60;
+  return `${m}m ${s}d`;
+}
+function getPredikat(nilai){
+  if(nilai>=90) return "Sangat Baik";
+  if(nilai>=80) return "Baik";
+  if(nilai>=70) return "Cukup";
+  return "Perlu Bimbingan";
+}
+
+/* =========================================================
+   MAIN RENDER SWITCH
+   ========================================================= */
+function render(){
+  if(state.screen === "start") renderStart();
+  else if(state.screen === "loading") renderLoading("Memuat bank soal...");
+  else if(state.screen === "exam") renderExam();
+  else if(state.screen === "submitting") renderLoading("Menyimpan hasil & membuat piagam...");
+  else if(state.screen === "result") renderResult();
+  else if(state.screen === "error") renderFatalError();
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+async function init(){
+  if(!API_URL || API_URL.indexOf("GANTI_DENGAN") === 0){
+    state.screen = "error";
+    state.errorMsg = "API_URL belum diisi. Buka file HTML ini, cari baris const API_URL, lalu isi dengan URL Web App hasil deploy Apps Script.";
+    render();
+    return;
+  }
+
+  state.screen = "loading";
+  render();
+
+  try{
+    const bank = await fetchBankSoal();
+    state.bankSoal = bank;
+    state.daftarMapel = Object.keys(bank);
+    state.screen = "start";
+    render();
+  }catch(err){
+    state.screen = "error";
+    state.errorMsg = err.message || "Terjadi kesalahan saat memuat soal.";
+    render();
+  }
+}
+
+init();
+</script>
 </body>
 </html>
