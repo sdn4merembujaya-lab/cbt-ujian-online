@@ -55,6 +55,10 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwc8u0_6420FLWOeFGJ3ZAR
     color:#fff;
     border-radius:var(--radius) var(--radius) 0 0;
     padding:22px 26px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
   }
   .header .eyebrow{
     font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
@@ -62,6 +66,12 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwc8u0_6420FLWOeFGJ3ZAR
   }
   .header h1{ font-size:23px; font-weight:600; }
   .header p{ margin:8px 0 0; font-size:13.5px; color:#c9d0e0; line-height:1.5; }
+  .logout-btn{
+    background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.25);
+    border-radius:8px; padding:8px 14px; font-size:13px; font-family:inherit;
+    font-weight:600; cursor:pointer; white-space:nowrap; flex-shrink:0;
+  }
+  .logout-btn:hover{ background:rgba(255,255,255,0.2); }
 
   .card{
     background:var(--paper-raised);
@@ -85,7 +95,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwc8u0_6420FLWOeFGJ3ZAR
   .field .hint{
     font-size:12px; color:var(--ink-soft); margin-top:5px; line-height:1.5;
   }
-  .field input[type="text"], .field select{
+  .field input[type="text"], .field input[type="password"], .field select{
     width:100%; padding:11px 13px; border:1.5px solid var(--border);
     border-radius:9px; font-size:15px; font-family:inherit;
     background:#fdfcf9; color:var(--ink);
@@ -138,7 +148,15 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwc8u0_6420FLWOeFGJ3ZAR
 </style>
 
 <script>
+const SESSION_KEY = "cbt_admin_session";
+
 const state = {
+  auth: {
+    loggedIn: false,
+    username: null,
+    submitting: false,
+    message: null
+  },
   logos: { logoKab:null, logoGugus:null, logoSekolah:null },
   submitting: false,
   message: null // { type: 'error'|'success', text }
@@ -146,12 +164,122 @@ const state = {
 
 const app = document.getElementById("app");
 
+/* ================= INIT: cek sesi login tersimpan ================= */
+(function initAuth(){
+  try{
+    const saved = sessionStorage.getItem(SESSION_KEY);
+    if(saved){
+      const parsed = JSON.parse(saved);
+      if(parsed && parsed.username){
+        state.auth.loggedIn = true;
+        state.auth.username = parsed.username;
+      }
+    }
+  }catch(err){ /* abaikan, anggap belum login */ }
+})();
+
 function render(){
+  if(!state.auth.loggedIn){
+    renderLogin();
+  } else {
+    renderAdminApp();
+  }
+}
+
+/* ================= HALAMAN LOGIN ================= */
+
+function renderLogin(){
   app.innerHTML = `
     <div class="header">
-      <div class="eyebrow">Halaman Admin</div>
-      <h1>Konfigurasi Sekolah &amp; Logo Piagam</h1>
-      <p>Isi data sekolah dan upload logo di sini. Sistem otomatis menyimpannya ke Google Drive dan mengisi sheet Konfigurasi — tidak perlu cari File ID manual.</p>
+      <div>
+        <div class="eyebrow">Halaman Admin</div>
+        <h1>Masuk Admin</h1>
+        <p>Masukkan username &amp; password untuk mengakses konfigurasi sekolah.</p>
+      </div>
+    </div>
+    <div class="card">
+      ${state.auth.message ? `<div class="alert alert-${state.auth.message.type === 'error' ? 'error' : 'success'}">${escapeHtml(state.auth.message.text)}</div>` : ""}
+
+      <form id="formLogin">
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" autocomplete="username" required placeholder="Contoh: admin">
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" autocomplete="current-password" required placeholder="Masukkan password">
+        </div>
+
+        <button type="submit" class="btn" id="btnLogin" ${state.auth.submitting ? "disabled" : ""}>
+          ${state.auth.submitting ? `<span class="spinner"></span> Memeriksa...` : "Masuk"}
+        </button>
+      </form>
+    </div>
+  `;
+
+  document.getElementById("formLogin").addEventListener("submit", handleLogin);
+}
+
+async function handleLogin(e){
+  e.preventDefault();
+
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+
+  if(!username || !password){
+    state.auth.message = { type:"error", text:"Username dan password wajib diisi." };
+    render();
+    return;
+  }
+
+  state.auth.submitting = true;
+  state.auth.message = null;
+  render();
+
+  try{
+    const res = await fetch(API_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify({ action:"login", data:{ username, password } })
+    });
+    const result = await res.json();
+
+    if(result.status !== "success"){
+      throw new Error(result.message || "Username atau password salah.");
+    }
+
+    state.auth.loggedIn = true;
+    state.auth.username = result.username || username;
+    state.auth.message = null;
+
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: state.auth.username }));
+
+  }catch(err){
+    state.auth.message = { type:"error", text: err.message || "Gagal login." };
+  }
+
+  state.auth.submitting = false;
+  render();
+}
+
+function handleLogout(){
+  state.auth.loggedIn = false;
+  state.auth.username = null;
+  sessionStorage.removeItem(SESSION_KEY);
+  render();
+}
+
+/* ================= FORM KONFIGURASI (SETELAH LOGIN) ================= */
+
+function renderAdminApp(){
+  app.innerHTML = `
+    <div class="header">
+      <div>
+        <div class="eyebrow">Halaman Admin — ${escapeHtml(state.auth.username || "")}</div>
+        <h1>Konfigurasi Sekolah &amp; Logo Piagam</h1>
+        <p>Isi data sekolah dan upload logo di sini. Sistem otomatis menyimpannya ke Google Drive dan mengisi sheet Konfigurasi — tidak perlu cari File ID manual.</p>
+      </div>
+      <button class="logout-btn" id="btnLogout" type="button">Keluar</button>
     </div>
     <div class="card">
       ${state.message ? `<div class="alert alert-${state.message.type === 'error' ? 'error' : 'success'}">${escapeHtml(state.message.text)}</div>` : ""}
@@ -191,6 +319,7 @@ function render(){
   `;
 
   document.getElementById("formAdmin").addEventListener("submit", handleSubmit);
+  document.getElementById("btnLogout").addEventListener("click", handleLogout);
 
   ["logoKab","logoGugus","logoSekolah"].forEach(key=>{
     const input = document.getElementById("input_"+key);
