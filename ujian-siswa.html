@@ -1,701 +1,953 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ujian Berbasis Komputer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --navy:#1B2A4E;
-    --navy-dark:#131F3B;
-    --cream:#F5F0E6;
-    --card:#FFFFFF;
-    --border:#E3DAC4;
-    --gold:#C79A56;
-    --gold-soft:#EADFC3;
-    --text:#1B2A4E;
-    --muted:#7A7F8D;
-    --danger:#B85C4B;
-    --ok:#3E7A5E;
-    --radius:16px;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    background:var(--cream);
-    font-family:'Inter',sans-serif;
-    color:var(--text);
-    min-height:100vh;
-    display:flex;
-    align-items:flex-start;
-    justify-content:center;
-    padding:32px 16px;
-  }
-  .wrap{width:100%;max-width:640px;}
-  .card{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    overflow:hidden;
-    box-shadow:0 1px 3px rgba(27,42,78,0.06);
-  }
-  .header{
-    background:var(--navy);
-    color:#fff;
-    padding:28px 32px 0;
-  }
-  .eyebrow{
-    text-transform:uppercase;
-    letter-spacing:.12em;
-    font-size:12px;
-    font-weight:700;
-    color:var(--gold);
-    margin:0 0 6px;
-  }
-  .title{
-    font-family:'Fraunces',serif;
-    font-weight:700;
-    font-size:28px;
-    margin:0 0 4px;
-  }
-  .subtitle{
-    font-size:14px;
-    color:#C7CEE0;
-    margin:0 0 20px;
-  }
-  .meta-row{
-    display:flex;
-    gap:18px;
-    font-size:13px;
-    color:#C7CEE0;
-    padding-bottom:20px;
-    flex-wrap:wrap;
-  }
-  .meta-row b{color:#fff;}
-  .scallop{
-    height:20px;
-    background:
-      radial-gradient(circle at 10px 0, transparent 10px, var(--navy) 10.5px) 0 -10px / 20px 20px repeat-x;
-  }
-  .body-pad{padding:28px 32px 32px;}
+/*********************************************************
+ * CBT GOOGLE APPS SCRIPT
+ * AUTO MAPEL DARI NAMA SHEET
+ * + AUTO GENERATE PIAGAM (PDF) SETIAP SISWA SELESAI UJIAN
+ * + LOGIN ADMIN (username/password dari sheet "admin")
+ * + doGet MENAMPILKAN HALAMAN HTML "ujian-siswa" LANGSUNG
+ * + SIMPAN FOTO PENGAWASAN (KAMERA) KE GOOGLE DRIVE
+ *********************************************************/
 
-  /* ===== FORM PENDAFTARAN ===== */
-  .field{margin-bottom:18px;}
-  .field label{
-    display:block;
-    font-weight:600;
-    font-size:13.5px;
-    color:var(--navy);
-    margin-bottom:6px;
-  }
-  .field input, .field select{
-    width:100%;
-    padding:12px 14px;
-    border:1px solid var(--border);
-    border-radius:10px;
-    background:var(--cream);
-    font-family:'Inter',sans-serif;
-    font-size:14.5px;
-    color:var(--text);
-  }
-  .field input::placeholder{color:#9C9484;}
-  .field input:focus, .field select:focus{
-    outline:2px solid var(--gold);
-    outline-offset:1px;
-    background:#fff;
-  }
-  .btn{
-    appearance:none;
-    border:none;
-    border-radius:10px;
-    padding:14px 22px;
-    font-family:'Inter',sans-serif;
-    font-weight:700;
-    font-size:14.5px;
-    cursor:pointer;
-  }
-  .btn-primary{background:var(--navy);color:#fff;width:100%;}
-  .btn-primary:hover{background:var(--navy-dark);}
-  .btn-primary:disabled{background:#B9BFCF;cursor:not-allowed;}
-  .error-msg{
-    color:var(--danger);
-    font-size:13px;
-    margin-top:-8px;
-    margin-bottom:16px;
-    display:none;
-  }
+// ======== KONFIGURASI PIAGAM (WAJIB DIISI) ========
+// ID file Google Docs template piagam (bentuk Word)
+const TEMPLATE_ID = "1uKf2mXivsgX4Z8HwRqvVTeh_d59u9wYinMmzwVfEu94";
+// ID folder Google Drive tempat menyimpan hasil PDF piagam
+const FOLDER_ID   = "11IXzlSnVBlCrBGmR9qhnzJMXpyXmv_xj";
+// ID folder Google Drive KHUSUS untuk foto pengawasan kamera
+// (boleh sama dengan FOLDER_ID di atas, atau buat folder baru di Drive
+// lalu copy ID-nya dari URL folder tersebut)
+const FOLDER_MONITORING_ID = "ISI_DENGAN_ID_FOLDER_MONITORING";
+// ====================================================
 
-  /* ===== NAVIGATOR NOMOR SOAL ===== */
-  .progress-line{
-    height:6px;
-    background:var(--gold-soft);
-    border-radius:4px;
-    overflow:hidden;
-    margin-bottom:18px;
-  }
-  .progress-fill{height:100%;background:var(--gold);border-radius:4px;transition:width .25s ease;}
-  .nav-toggle{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    cursor:pointer;
-    margin-bottom:10px;
-  }
-  .nav-toggle span{font-size:13px;font-weight:600;color:var(--navy);}
-  .nav-toggle small{color:var(--muted);font-weight:500;}
-  .navigator{
-    display:grid;
-    grid-template-columns:repeat(7,1fr);
-    gap:8px;
-    margin-bottom:22px;
-    padding:14px;
-    background:var(--cream);
-    border:1px solid var(--border);
-    border-radius:12px;
-  }
-  .nav-item{
-    aspect-ratio:1;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:8px;
-    border:1.5px solid var(--border);
-    background:#fff;
-    font-size:13px;
-    font-weight:600;
-    color:var(--navy);
-    cursor:pointer;
-  }
-  .nav-item.answered{background:var(--navy);color:#fff;border-color:var(--navy);}
-  .nav-item.current{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-soft);}
-  .nav-legend{
-    display:flex;
-    gap:16px;
-    font-size:12px;
-    color:var(--muted);
-    margin:-12px 0 22px;
-    flex-wrap:wrap;
-  }
-  .nav-legend span{display:inline-flex;align-items:center;gap:6px;}
-  .dot{width:10px;height:10px;border-radius:3px;display:inline-block;}
-  .dot.d-answered{background:var(--navy);}
-  .dot.d-current{background:#fff;border:1.5px solid var(--gold);}
-  .dot.d-empty{background:#fff;border:1.5px solid var(--border);}
 
-  /* ===== SOAL ===== */
-  .soal-index{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;}
-  .soal-gambar{
-    width:100%;
-    max-height:280px;
-    object-fit:contain;
-    border-radius:10px;
-    border:1px solid var(--border);
-    margin-bottom:16px;
-    background:#fff;
-  }
-  .soal-teks{
-    font-size:14px;
-    line-height:1.6;
-    background:var(--cream);
-    border:1px solid var(--border);
-    border-radius:10px;
-    padding:14px 16px;
-    margin-bottom:16px;
-    white-space:pre-line;
-    color:#3a3f4d;
-    max-height:200px;
-    overflow-y:auto;
-  }
-  .pertanyaan{
-    font-family:'Fraunces',serif;
-    font-weight:600;
-    font-size:19px;
-    line-height:1.4;
-    margin:0 0 18px;
-    white-space:pre-line;
-  }
-  .opsi{
-    display:flex;
-    align-items:center;
-    gap:14px;
-    padding:14px 16px;
-    border:1.5px solid var(--border);
-    border-radius:12px;
-    margin-bottom:12px;
-    cursor:pointer;
-    background:#fff;
-  }
-  .opsi:hover{border-color:var(--gold);}
-  .opsi.selected{border-color:var(--navy);background:#F0F3FA;}
-  .opsi .badge{
-    width:28px;height:28px;
-    border-radius:50%;
-    background:var(--gold-soft);
-    color:var(--navy);
-    display:flex;align-items:center;justify-content:center;
-    font-weight:700;font-size:13px;
-    flex-shrink:0;
-  }
-  .opsi.selected .badge{background:var(--navy);color:#fff;}
-  textarea.jawaban-isian{
-    width:100%;
-    min-height:110px;
-    padding:14px 16px;
-    border:1.5px solid var(--border);
-    border-radius:12px;
-    font-family:'Inter',sans-serif;
-    font-size:14.5px;
-    resize:vertical;
-    margin-bottom:12px;
-  }
-  textarea.jawaban-isian:focus{outline:2px solid var(--gold);outline-offset:1px;}
+function doGet(e) {
 
-  .nav-buttons{
-    display:flex;
-    gap:12px;
-    margin-top:24px;
-  }
-  .btn-secondary{
-    flex:1;
-    background:#fff;
-    border:1.5px solid var(--border);
-    color:var(--muted);
-  }
-  .btn-secondary:disabled{opacity:.5;cursor:not-allowed;}
-  .btn-next{flex:1;background:var(--navy);color:#fff;}
-  .btn-submit{flex:1;background:var(--gold);color:var(--navy-dark);}
+  try {
 
-  /* ===== HASIL ===== */
-  .hasil-wrap{text-align:center;padding:12px 0 4px;}
-  .hasil-skor{
-    font-family:'Fraunces',serif;
-    font-weight:700;
-    font-size:52px;
-    color:var(--navy);
-    margin:8px 0 4px;
-  }
-  .hasil-label{color:var(--muted);font-size:14px;margin-bottom:24px;}
-  .hasil-detail{
-    display:flex;
-    justify-content:center;
-    gap:28px;
-    margin-bottom:28px;
-  }
-  .hasil-detail div{text-align:center;}
-  .hasil-detail b{display:block;font-size:20px;color:var(--navy);}
-  .hasil-detail span{font-size:12px;color:var(--muted);}
-  .link-piagam{
-    display:inline-block;
-    margin-top:6px;
-    color:var(--navy);
-    font-weight:600;
-    font-size:14px;
-    text-decoration:underline;
-  }
-  .hidden{display:none !important;}
-  .banner-demo{
-    background:#FCEFC7;
-    border:1px solid var(--gold);
-    color:#5C4A1E;
-    font-size:12.5px;
-    padding:10px 14px;
-    border-radius:8px;
-    margin-bottom:18px;
-  }
-  @media (max-width:420px){
-    .navigator{grid-template-columns:repeat(6,1fr);}
-    .hasil-skor{font-size:42px;}
-  }
-</style>
-</head>
-<body>
-<div class="wrap">
+    const action = e.parameter.action || "";
 
-  <!-- ================= LAYAR 1: PENDAFTARAN ================= -->
-  <div class="card" id="screen-login">
-    <div class="header">
-      <p class="eyebrow">Kartu Peserta Ujian</p>
-      <h1 class="title">Ujian Berbasis Komputer</h1>
-      <p class="subtitle">Isi data diri untuk memulai</p>
-    </div>
-    <div class="scallop"></div>
-    <div class="body-pad">
-      <div id="demo-banner" class="banner-demo hidden">
-        Mode demo — API_URL belum diisi di bagian atas kode, sehingga soal yang tampil adalah contoh. Isi <code>CONFIG.API_URL</code> dengan URL Web App Apps Script Anda sebelum dipakai siswa.
-      </div>
-      <div class="field">
-        <label for="inp-nama">Nama Lengkap</label>
-        <input id="inp-nama" type="text" placeholder="Contoh: Siti Aminah">
-      </div>
-      <div class="field">
-        <label for="inp-nisn">NISN</label>
-        <input id="inp-nisn" type="text" inputmode="numeric" placeholder="Contoh: 0123456789">
-      </div>
-      <div class="field">
-        <label for="inp-sekolah">Asal Sekolah</label>
-        <input id="inp-sekolah" type="text" placeholder="Contoh: SDN 1 Contoh">
-      </div>
-      <div class="field">
-        <label for="inp-mapel">Mata Pelajaran</label>
-        <select id="inp-mapel">
-          <option value="">Pilih mata pelajaran</option>
-        </select>
-      </div>
-      <p class="error-msg" id="login-error">Mohon lengkapi semua data terlebih dahulu.</p>
-      <button class="btn btn-primary" id="btn-mulai">Mulai Ujian</button>
-    </div>
-  </div>
-
-  <!-- ================= LAYAR 2: LEMBAR SOAL ================= -->
-  <div class="card hidden" id="screen-exam">
-    <div class="header">
-      <p class="eyebrow" id="exam-mapel">MAPEL</p>
-      <h1 class="title" id="exam-nama">Nama</h1>
-      <div class="meta-row">
-        <span>NISN <b id="exam-nisn">-</b></span>
-        <span>Terjawab <b id="exam-progress">0/0</b></span>
-      </div>
-    </div>
-    <div class="scallop"></div>
-    <div class="body-pad">
-
-      <div class="progress-line"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-
-      <div class="nav-toggle" id="nav-toggle">
-        <span>Navigasi Soal</span>
-        <small id="nav-toggle-label">Sembunyikan ▲</small>
-      </div>
-      <div class="navigator" id="navigator"></div>
-      <div class="nav-legend">
-        <span><i class="dot d-answered"></i>Sudah dijawab</span>
-        <span><i class="dot d-current"></i>Sedang dibuka</span>
-        <span><i class="dot d-empty"></i>Belum dijawab</span>
-      </div>
-
-      <p class="soal-index" id="soal-index">Soal 1 / 35</p>
-      <img class="soal-gambar hidden" id="soal-gambar" alt="Gambar soal">
-      <div class="soal-teks hidden" id="soal-teks"></div>
-      <p class="pertanyaan" id="soal-pertanyaan">Memuat soal...</p>
-      <div id="opsi-container"></div>
-
-      <div class="nav-buttons">
-        <button class="btn btn-secondary" id="btn-prev">Sebelumnya</button>
-        <button class="btn btn-next" id="btn-next">Selanjutnya</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= LAYAR 3: HASIL ================= -->
-  <div class="card hidden" id="screen-result">
-    <div class="header">
-      <p class="eyebrow">Ujian Selesai</p>
-      <h1 class="title" id="result-nama">Nama</h1>
-      <p class="subtitle" id="result-mapel">Mapel</p>
-    </div>
-    <div class="scallop"></div>
-    <div class="body-pad">
-      <div class="hasil-wrap">
-        <div class="hasil-skor" id="result-nilai">0</div>
-        <p class="hasil-label">Nilai Akhir</p>
-        <div class="hasil-detail">
-          <div><b id="result-benar">0</b><span>Jawaban Benar</span></div>
-          <div><b id="result-total">0</b><span>Total Soal PG</span></div>
-        </div>
-        <a href="#" target="_blank" class="link-piagam hidden" id="result-piagam">Lihat / Unduh Piagam →</a>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<script>
-/* =========================================================
-   KONFIGURASI
-   Ganti API_URL dengan URL Web App Apps Script Anda,
-   contoh: https://script.google.com/macros/s/XXXXXXX/exec
-   ========================================================= */
-const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbwc8u0_6420FLWOeFGJ3ZARO6nvOlj1yULKw5LxLuszv7E-sRt38byI1UuIG0xCuj5P/exec" // <-- ISI DI SINI
-};
-
-/* Data contoh dipakai kalau API_URL belum diisi, supaya halaman
-   tetap bisa dicoba tanpa perlu deploy dulu. */
-const DEMO_DATA = {
-  "ips": [
-    {id:1, readingText:"", question:"Kerajaan tertua di wilayah Nusantara adalah . . . .",
-     options:[{id:"a",text:"Tarumanegara"},{id:"b",text:"Majapahit"},{id:"c",text:"Kutai"},{id:"d",text:"Singasari"}],
-     correctAnswer:"c", gambar:"", tipe:"pg"},
-    {id:2, readingText:"", question:"Prasasti Ciaruteun adalah salah satu peninggalan Kerajaan . . . .",
-     options:[{id:"a",text:"Kutai"},{id:"b",text:"Tarumanegara"},{id:"c",text:"Sriwijaya"},{id:"d",text:"Kalingga"}],
-     correctAnswer:"b", gambar:"", tipe:"pg"},
-    {id:3, readingText:"", question:"Pesantren adalah tempat . . . .",
-     options:[], correctAnswer:"", gambar:"", tipe:"isian"}
-  ]
-};
-
-let state = {
-  bankSoal: null,
-  mapel: "",
-  nama: "",
-  nisn: "",
-  sekolah: "",
-  questions: [],
-  answers: {},   // { questionId: "a" | teks }
-  current: 0,
-  isDemo: false
-};
-
-const $ = (id) => document.getElementById(id);
-
-/* ---------- UBAH LINK GOOGLE DRIVE JADI LINK GAMBAR LANGSUNG ----------
-   Kalau kolom "Gambar URL" di sheet diisi link share biasa
-   (https://drive.google.com/file/d/XXXX/view atau ?id=XXXX),
-   fungsi ini mengubahnya jadi format yang bisa langsung dipakai <img>.
-   Kalau bukan link Drive (link gambar biasa/https://...), dibiarkan apa adanya. */
-function convertDriveLink(url){
-  const match = url.match(/\/file\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
-  if(match && match[1]){
-    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-  }
-  return url;
-}
-
-/* ---------- MUAT BANK SOAL ---------- */
-async function loadBankSoal(){
-  if(!CONFIG.API_URL){
-    state.bankSoal = DEMO_DATA;
-    state.isDemo = true;
-    $("demo-banner").classList.remove("hidden");
-    populateMapel();
-    return;
-  }
-  try{
-    const res = await fetch(CONFIG.API_URL + "?action=soal");
-    const data = await res.json();
-    state.bankSoal = data;
-    populateMapel();
-  }catch(err){
-    console.error(err);
-    state.bankSoal = DEMO_DATA;
-    state.isDemo = true;
-    $("demo-banner").classList.remove("hidden");
-    populateMapel();
-  }
-}
-
-function populateMapel(){
-  const select = $("inp-mapel");
-  Object.keys(state.bankSoal).forEach(key=>{
-    const opt = document.createElement("option");
-    opt.value = key;
-    opt.textContent = key.toUpperCase();
-    select.appendChild(opt);
-  });
-}
-
-/* ---------- MULAI UJIAN ---------- */
-$("btn-mulai").addEventListener("click", () => {
-  const nama = $("inp-nama").value.trim();
-  const nisn = $("inp-nisn").value.trim();
-  const sekolah = $("inp-sekolah").value.trim();
-  const mapel = $("inp-mapel").value;
-
-  if(!nama || !nisn || !sekolah || !mapel){
-    $("login-error").style.display = "block";
-    return;
-  }
-  $("login-error").style.display = "none";
-
-  state.nama = nama;
-  state.nisn = nisn;
-  state.sekolah = sekolah;
-  state.mapel = mapel;
-  state.questions = state.bankSoal[mapel] || [];
-  state.answers = {};
-  state.current = 0;
-
-  $("exam-mapel").textContent = mapel.toUpperCase();
-  $("exam-nama").textContent = nama;
-  $("exam-nisn").textContent = nisn;
-
-  $("screen-login").classList.add("hidden");
-  $("screen-exam").classList.remove("hidden");
-
-  renderNavigator();
-  renderQuestion();
-});
-
-/* ---------- NAVIGATOR NOMOR SOAL ---------- */
-function renderNavigator(){
-  const nav = $("navigator");
-  nav.innerHTML = "";
-  state.questions.forEach((q, idx)=>{
-    const item = document.createElement("div");
-    item.className = "nav-item";
-    item.textContent = idx + 1;
-    if(state.answers[q.id] !== undefined && state.answers[q.id] !== "") item.classList.add("answered");
-    if(idx === state.current) item.classList.add("current");
-    item.addEventListener("click", ()=>{ state.current = idx; renderQuestion(); });
-    nav.appendChild(item);
-  });
-  updateProgress();
-}
-
-$("nav-toggle").addEventListener("click", ()=>{
-  const nav = $("navigator");
-  const legend = document.querySelector(".nav-legend");
-  const collapsed = nav.classList.toggle("hidden");
-  legend.classList.toggle("hidden");
-  $("nav-toggle-label").textContent = collapsed ? "Tampilkan ▼" : "Sembunyikan ▲";
-});
-
-function updateProgress(){
-  const total = state.questions.length;
-  const answered = Object.values(state.answers).filter(v=>v!==undefined && v!=="").length;
-  $("exam-progress").textContent = `${answered}/${total}`;
-  $("progress-fill").style.width = total ? `${(answered/total)*100}%` : "0%";
-}
-
-/* ---------- RENDER SOAL ---------- */
-function renderQuestion(){
-  const q = state.questions[state.current];
-  if(!q) return;
-
-  $("soal-index").textContent = `Soal ${state.current+1} / ${state.questions.length}`;
-
-  const teksEl = $("soal-teks");
-  if(q.readingText && q.readingText.trim() !== ""){
-    teksEl.textContent = q.readingText;
-    teksEl.classList.remove("hidden");
-  }else{
-    teksEl.classList.add("hidden");
-  }
-
-  const gambarEl = $("soal-gambar");
-  if(q.gambar && q.gambar.trim() !== ""){
-    gambarEl.src = convertDriveLink(q.gambar.trim());
-    gambarEl.classList.remove("hidden");
-  }else{
-    gambarEl.classList.add("hidden");
-    gambarEl.src = "";
-  }
-
-  $("soal-pertanyaan").textContent = q.question;
-
-  const container = $("opsi-container");
-  container.innerHTML = "";
-
-  if(q.tipe === "pg"){
-    q.options.forEach(opt=>{
-      const div = document.createElement("div");
-      div.className = "opsi";
-      if(state.answers[q.id] === opt.id) div.classList.add("selected");
-      div.innerHTML = `<span class="badge">${opt.id.toUpperCase()}</span><span>${opt.text}</span>`;
-      div.addEventListener("click", ()=>{
-        state.answers[q.id] = opt.id;
-        renderNavigator();
-        renderQuestion();
-      });
-      container.appendChild(div);
-    });
-  }else{
-    const textarea = document.createElement("textarea");
-    textarea.className = "jawaban-isian";
-    textarea.placeholder = q.tipe === "uraian" ? "Tulis jawaban uraianmu di sini..." : "Tulis jawabanmu di sini...";
-    textarea.value = state.answers[q.id] || "";
-    textarea.addEventListener("input", (e)=>{
-      state.answers[q.id] = e.target.value;
-      renderNavigator();
-    });
-    container.appendChild(textarea);
-  }
-
-  $("btn-prev").disabled = state.current === 0;
-  const isLast = state.current === state.questions.length - 1;
-  const nextBtn = $("btn-next");
-  nextBtn.textContent = isLast ? "Selesai & Kumpulkan" : "Selanjutnya";
-  nextBtn.className = isLast ? "btn btn-submit" : "btn btn-next";
-
-  updateProgress();
-}
-
-$("btn-prev").addEventListener("click", ()=>{
-  if(state.current > 0){ state.current--; renderQuestion(); }
-});
-
-$("btn-next").addEventListener("click", ()=>{
-  const isLast = state.current === state.questions.length - 1;
-  if(isLast){
-    submitExam();
-  }else{
-    state.current++;
-    renderQuestion();
-  }
-});
-
-/* ---------- SUBMIT ---------- */
-async function submitExam(){
-  const pgQuestions = state.questions.filter(q=>q.tipe === "pg");
-  let benar = 0;
-  pgQuestions.forEach(q=>{
-    if(state.answers[q.id] && state.answers[q.id] === q.correctAnswer) benar++;
-  });
-  const total = pgQuestions.length;
-  const nilai = total > 0 ? Math.round((benar/total)*100) : 0;
-
-  const jawabanUraian = state.questions
-    .filter(q=>q.tipe !== "pg")
-    .map(q=>`${q.question}\n=> ${state.answers[q.id] || "(kosong)"}`)
-    .join("\n\n");
-
-  const payload = {
-    action:"saveRekap",
-    data:{
-      nama: state.nama,
-      nisn: state.nisn,
-      sekolah: state.sekolah,
-      mapel: state.mapel,
-      benar, total, nilai,
-      waktu: new Date().toLocaleString("id-ID"),
-      jawabanUraian
+    // Dibuka langsung lewat browser (tanpa parameter action) -> tampilkan halaman HTML
+    if (action == "") {
+      return HtmlService
+        .createHtmlOutputFromFile("ujian-siswa")
+        .setTitle("Ujian Berbasis Komputer")
+        .addMetaTag("viewport", "width=device-width, initial-scale=1");
     }
-  };
+
+    // Dipanggil oleh JavaScript halaman untuk ambil rekap nilai
+    if (action == "rekap") {
+      return ContentService
+        .createTextOutput(JSON.stringify(getAllRekap()))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Dipanggil oleh JavaScript halaman untuk ambil bank soal
+    if (action == "soal") {
+      return ContentService
+        .createTextOutput(JSON.stringify(getQuestionsData()))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({status:"error", message:"Action tidak dikenali."}))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  }
+
+  catch(err){
+
+    return ContentService
+      .createTextOutput(JSON.stringify({status:"error", message:err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  }
+
+}
+
+
+
+function doPost(e){
+
+  try{
+
+    // Validasi: pastikan request punya body
+    if (!e || !e.postData || !e.postData.contents) {
+      return ContentService
+      .createTextOutput(
+        JSON.stringify({
+          status:"error",
+          message:"Request tidak memiliki data (postData kosong)."
+        })
+      )
+      .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const body = JSON.parse(
+      e.postData.contents
+    );
+
+
+    if(body.action=="saveRekap"){
+
+      // Validasi: pastikan field 'data' ada dan berupa object
+      if (!body.data || typeof body.data !== "object") {
+        return ContentService
+        .createTextOutput(
+          JSON.stringify({
+            status:"error",
+            message:"Field 'data' tidak ditemukan pada request. Pastikan payload berbentuk { action: 'saveRekap', data: {...} }."
+          })
+        )
+        .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      const result = saveRekapEntry(body.data);
+
+      return ContentService
+      .createTextOutput(
+        JSON.stringify({
+          status:"success",
+          piagamUrl: result.piagamUrl || ""
+        })
+      )
+      .setMimeType(
+        ContentService.MimeType.JSON
+      );
+
+    }
+
+
+    if(body.action=="saveKonfigurasi"){
+
+      if (!body.data || typeof body.data !== "object") {
+        return ContentService
+        .createTextOutput(
+          JSON.stringify({
+            status:"error",
+            message:"Field 'data' tidak ditemukan pada request."
+          })
+        )
+        .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      saveKonfigurasiEntry(body.data);
+
+      return ContentService
+      .createTextOutput(
+        JSON.stringify({
+          status:"success"
+        })
+      )
+      .setMimeType(
+        ContentService.MimeType.JSON
+      );
+
+    }
+
+
+    if(body.action=="login"){
+
+      if (!body.data || typeof body.data !== "object") {
+        return ContentService
+        .createTextOutput(
+          JSON.stringify({
+            status:"error",
+            message:"Field 'data' tidak ditemukan pada request."
+          })
+        )
+        .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      const loginResult = checkLogin(body.data.username, body.data.password);
+
+      return ContentService
+      .createTextOutput(
+        JSON.stringify(loginResult)
+      )
+      .setMimeType(
+        ContentService.MimeType.JSON
+      );
+
+    }
+
+
+    if(body.action=="saveFoto"){
+
+      if (!body.data || typeof body.data !== "object") {
+        return ContentService
+        .createTextOutput(
+          JSON.stringify({
+            status:"error",
+            message:"Field 'data' tidak ditemukan pada request."
+          })
+        )
+        .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      const fotoResult = saveFotoPengawasan(body.data);
+
+      return ContentService
+      .createTextOutput(
+        JSON.stringify({
+          status:"success",
+          fotoUrl: fotoResult.fotoUrl || ""
+        })
+      )
+      .setMimeType(
+        ContentService.MimeType.JSON
+      );
+
+    }
+
+
+    return ContentService
+    .createTextOutput(
+      JSON.stringify({
+        status:"error",
+        message:"Action tidak ditemukan"
+      })
+    )
+    .setMimeType(
+      ContentService.MimeType.JSON
+    );
+
+
+  }
+
+  catch(err){
+
+    return ContentService
+    .createTextOutput(
+      JSON.stringify({
+        status:"error",
+        message:err.toString()
+      })
+    )
+    .setMimeType(
+      ContentService.MimeType.JSON
+    );
+
+  }
+
+}
+
+
+
+/*********************************************************
+ * LOGIN ADMIN — cek username & password ke sheet "admin"
+ * Sheet "admin" kolom A: Username | B: Password | C: Role
+ * (Role dipakai supaya panel admin.html hanya bisa dimasuki
+ * akun dengan role "admin" — Guru/Siswa ditolak.)
+ *********************************************************/
+
+function checkLogin(username, password){
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("admin");
+
+  if(!sheet){
+    return { status:"error", message:"Sheet 'admin' tidak ditemukan." };
+  }
+
+  const data = sheet.getDataRange().getValues();
+  const u = (username || "").toString().trim();
+  const p = (password || "").toString().trim();
+
+  if(!u || !p){
+    return { status:"error", message:"Username dan password wajib diisi." };
+  }
+
+  for(let i=1;i<data.length;i++){
+    const rowUser = (data[i][0] || "").toString().trim();
+    const rowPass = (data[i][1] || "").toString().trim();
+    const rowRole = (data[i][2] || "").toString().trim().toLowerCase();
+
+    if(rowUser.toLowerCase() === u.toLowerCase() && rowPass === p){
+
+      if(rowRole !== "admin"){
+        return { status:"error", message:"Akun ini tidak memiliki akses ke panel admin." };
+      }
+
+      return { status:"success", username: rowUser, role: rowRole };
+    }
+  }
+
+  return { status:"error", message:"Username atau password salah." };
+
+}
+
+
+
+/*********************************************************
+ * AMBIL SOAL DARI GOOGLE SHEETS
+ *********************************************************/
+
+function getQuestionsData(){
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  const sheets = ss.getSheets();
+
+  const bankSoal = {};
+
+
+  sheets.forEach(function(sheet){
+
+    const sheetName = sheet.getName();
+
+
+    //abaikan sheet rekap & konfigurasi & admin & monitoring
+    if(
+      sheetName.toLowerCase()=="rekap" ||
+      sheetName.toLowerCase()=="konfigurasi" ||
+      sheetName.toLowerCase()=="admin" ||
+      sheetName.toLowerCase()=="monitoring"
+    ){
+
+      return;
+
+    }
+
+
+    const data = sheet
+    .getDataRange()
+    .getValues();
+
+
+    if(data.length<=1){
+
+      return;
+
+    }
+
+
+
+    const soalMapel = [];
+
+
+    //mulai dari baris ke-2
+    for(let i=1;i<data.length;i++){
+
+      const row = data[i];
+
+
+      //kolom pertanyaan kosong
+      if(!row[2]){
+
+        continue;
+
+      }
+
+
+      const soal = {
+
+        id : Number(row[0]),
+
+        readingText :
+        row[1] ? row[1].toString() : "",
+
+
+        question :
+        row[2] ? row[2].toString() : "",
+
+
+        options : [
+
+          {
+            id:"a",
+            text:row[3] ? row[3].toString() : ""
+          },
+
+          {
+            id:"b",
+            text:row[4] ? row[4].toString() : ""
+          },
+
+          {
+            id:"c",
+            text:row[5] ? row[5].toString() : ""
+          },
+
+          {
+            id:"d",
+            text:row[6] ? row[6].toString() : ""
+          }
+
+        ],
+
+
+        correctAnswer :
+
+        row[7]
+        ? row[7].toString().toLowerCase()
+        : "",
+
+
+        explanation :
+
+        row[8]
+        ? row[8].toString()
+        : "",
+
+
+        gambar :
+
+        row[9]
+        ? row[9].toString()
+        : "",
+
+
+        tipe :
+
+        row[10]
+        ? row[10].toString().trim().toLowerCase()
+        : "pg"
+
+
+      };
+
+
+      soalMapel.push(soal);
+
+
+    }
+
+
+    //nama sheet otomatis jadi mapel
+    if(soalMapel.length>0){
+
+      bankSoal[
+        sheetName.toLowerCase()
+      ] = soalMapel;
+
+    }
+
+
+  });
+
+
+
+  return bankSoal;
+
+
+}
+
+
+
+/*********************************************************
+ * REKAP NILAI
+ *********************************************************/
+
+function getRekapSheet(){
+
+
+  const ss =
+  SpreadsheetApp
+  .getActiveSpreadsheet();
+
+
+  let sheet =
+  ss.getSheetByName("Rekap");
+
+
+  if(!sheet){
+
+    sheet =
+    ss.insertSheet("Rekap");
+
+
+    sheet.appendRow([
+
+      "Tanggal",
+      "Nama",
+      "NISN",
+      "Sekolah",
+      "Mapel",
+      "Benar",
+      "Total",
+      "Nilai",
+      "Waktu",
+      "Link Piagam",
+      "Jawaban Uraian"
+
+    ]);
+
+  }
+
+
+  return sheet;
+
+
+}
+
+
+
+function saveRekapEntry(data){
+
+  // Validasi dasar supaya tidak crash kalau dipanggil tanpa argumen
+  if (!data || typeof data !== "object") {
+    throw new Error(
+      "saveRekapEntry dipanggil tanpa data siswa. " +
+      "Jangan jalankan fungsi ini langsung dari editor — gunakan testGenerate() untuk uji coba."
+    );
+  }
+
+  const sheet =
+  getRekapSheet();
+
 
   let piagamUrl = "";
-  if(!state.isDemo && CONFIG.API_URL){
-    try{
-      const res = await fetch(CONFIG.API_URL, {
-        method:"POST",
-        body: JSON.stringify(payload)
-      });
-      const json = await res.json();
-      if(json.status === "success") piagamUrl = json.piagamUrl || "";
-    }catch(err){
-      console.error("Gagal mengirim hasil:", err);
+
+  // Generate piagam otomatis (jika gagal, rekap tetap tersimpan)
+  try {
+    piagamUrl = generateSertifikat(TEMPLATE_ID, FOLDER_ID, data);
+  } catch (err) {
+    console.error("Gagal generate piagam:", err.toString());
+  }
+
+
+  sheet.appendRow([
+
+    new Date(),
+
+    data.nama || "",
+
+    data.nisn || "",
+
+    data.sekolah || "",
+
+    data.mapel || "",
+
+    data.benar || 0,
+
+    data.total || 0,
+
+    data.nilai || 0,
+
+    data.waktu || "",
+
+    piagamUrl,
+
+    data.jawabanUraian || ""
+
+  ]);
+
+
+  return { piagamUrl: piagamUrl };
+
+
+}
+
+
+
+function getAllRekap(){
+
+
+  const sheet =
+  getRekapSheet();
+
+
+  const data =
+  sheet
+  .getDataRange()
+  .getValues();
+
+
+
+  if(data.length<=1){
+
+    return [];
+
+  }
+
+
+
+  const hasil = [];
+
+
+  for(let i=1;i<data.length;i++){
+
+    hasil.push({
+
+      waktu:data[i][0],
+      nama:data[i][1],
+      nisn:data[i][2],
+      sekolah:data[i][3],
+      mapel:data[i][4],
+      benar:data[i][5],
+      total:data[i][6],
+      nilai:data[i][7],
+      waktuTempuh:data[i][8],
+      piagamUrl:data[i][9],
+      jawabanUraian:data[i][10]
+
+    });
+
+  }
+
+
+  return hasil.reverse();
+
+
+}
+
+
+
+/*********************************************************
+ * FOTO PENGAWASAN (KAMERA) — disimpan ke Drive + sheet "Monitoring"
+ * Dipanggil dari ujian-siswa.html lewat action "saveFoto",
+ * berkala selama siswa mengerjakan ujian.
+ *********************************************************/
+
+function getMonitoringSheet(){
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("Monitoring");
+
+  if(!sheet){
+    sheet = ss.insertSheet("Monitoring");
+    sheet.appendRow([
+      "Waktu",
+      "Nama",
+      "NISN",
+      "Sekolah",
+      "Mapel",
+      "Link Foto"
+    ]);
+  }
+
+  return sheet;
+
+}
+
+
+function saveFotoPengawasan(data){
+
+  if(!data || typeof data !== "object" || !data.fotoBase64){
+    throw new Error("Data foto tidak valid atau kosong.");
+  }
+
+  if(!FOLDER_MONITORING_ID || FOLDER_MONITORING_ID.indexOf("ISI_DENGAN") === 0){
+    throw new Error("FOLDER_MONITORING_ID belum diisi di bagian atas script.");
+  }
+
+  const folder = DriveApp.getFolderById(FOLDER_MONITORING_ID);
+  const decoded = Utilities.base64Decode(data.fotoBase64);
+
+  const namaFile =
+    (data.nama || "siswa") + " - " +
+    (data.nisn || "-") + " - " +
+    new Date().getTime() + ".jpg";
+
+  const blob = Utilities.newBlob(decoded, "image/jpeg", namaFile);
+  const file = folder.createFile(blob);
+
+  file.setSharing(
+    DriveApp.Access.ANYONE_WITH_LINK,
+    DriveApp.Permission.VIEW
+  );
+
+  const sheet = getMonitoringSheet();
+  sheet.appendRow([
+    new Date(),
+    data.nama || "",
+    data.nisn || "",
+    data.sekolah || "",
+    data.mapel || "",
+    file.getUrl()
+  ]);
+
+  return { fotoUrl: file.getUrl() };
+
+}
+
+
+
+/*********************************************************
+ * KONFIGURASI SEKOLAH (Kepala Sekolah, NIP, Tempat)
+ * Diisi manual sekali di sheet "Konfigurasi":
+ * Kolom A: Sekolah | B: Kepala Sekolah | C: NIP | D: Tempat
+ *********************************************************/
+
+function getSekolahConfig(namaSekolah){
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Konfigurasi");
+
+  if(!sheet){
+    return { kepsek: "", nip: "", tempat: "", logoKabId: "", logoGugusId: "", logoSekolahId: "" };
+  }
+
+  const data = sheet.getDataRange().getValues();
+
+  for(let i=1;i<data.length;i++){
+    const namaSheetSekolah = data[i][0] ? data[i][0].toString().trim().toLowerCase() : "";
+    if(namaSheetSekolah === namaSekolah.trim().toLowerCase()){
+      return {
+        kepsek: data[i][1] || "",
+        nip: data[i][2] || "",
+        tempat: data[i][3] || "",
+        logoKabId: data[i][4] || "",
+        logoGugusId: data[i][5] || "",
+        logoSekolahId: data[i][6] || ""
+      };
     }
   }
 
-  showResult(benar, total, nilai, piagamUrl);
+  return { kepsek: "", nip: "", tempat: "", logoKabId: "", logoGugusId: "", logoSekolahId: "" };
+
 }
 
-function showResult(benar, total, nilai, piagamUrl){
-  $("screen-exam").classList.add("hidden");
-  $("screen-result").classList.remove("hidden");
-  $("result-nama").textContent = state.nama;
-  $("result-mapel").textContent = state.mapel.toUpperCase();
-  $("result-nilai").textContent = nilai;
-  $("result-benar").textContent = benar;
-  $("result-total").textContent = total;
-  if(piagamUrl){
-    const link = $("result-piagam");
-    link.href = piagamUrl;
-    link.classList.remove("hidden");
+
+
+/*********************************************************
+ * SISIPKAN LOGO (GAMBAR) MENGGANTIKAN PLACEHOLDER TEKS
+ * Placeholder harus berdiri sendiri dalam satu paragraf/sel
+ * tabel, contoh: {{LOGO_SEKOLAH}}
+ *********************************************************/
+
+function replacePlaceholderWithImage(body, placeholder, fileId, widthPt){
+
+  const searchResult = body.findText(placeholder);
+
+  if(!searchResult){
+    return; // placeholder tidak ditemukan, lewati
   }
+
+  const paragraph = searchResult.getElement().getParent().asParagraph();
+
+  // Kosongkan teks placeholder di paragraf itu
+  paragraph.clear();
+
+  if(!fileId){
+    return; // tidak ada logo untuk sekolah ini, biarkan kosong
+  }
+
+  try{
+
+    const blob = DriveApp.getFileById(fileId).getBlob();
+    const img = paragraph.insertInlineImage(0, blob);
+
+    const ratio = img.getHeight() / img.getWidth();
+    const width = widthPt || 60;
+
+    img.setWidth(width);
+    img.setHeight(width * ratio);
+
+  }catch(err){
+
+    console.error("Gagal memasang logo (" + placeholder + "):", err.toString());
+
+  }
+
 }
 
-loadBankSoal();
-</script>
-</body>
-</html>
+
+
+/*********************************************************
+ * SIMPAN KONFIGURASI SEKOLAH + UPLOAD LOGO DARI HALAMAN ADMIN
+ * Dipanggil dari admin.html lewat action "saveKonfigurasi"
+ *********************************************************/
+
+function uploadLogoImage(base64Data, mimeType, fileName){
+
+  const folder = DriveApp.getFolderById(FOLDER_ID);
+  const decoded = Utilities.base64Decode(base64Data);
+  const blob = Utilities.newBlob(decoded, mimeType || "image/png", fileName);
+  const file = folder.createFile(blob);
+
+  file.setSharing(
+    DriveApp.Access.ANYONE_WITH_LINK,
+    DriveApp.Permission.VIEW
+  );
+
+  return file.getId();
+
+}
+
+
+function saveKonfigurasiEntry(data){
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("Konfigurasi");
+
+  if(!sheet){
+    sheet = ss.insertSheet("Konfigurasi");
+    sheet.appendRow([
+      "Sekolah",
+      "Kepala Sekolah",
+      "NIP",
+      "Tempat",
+      "Logo Kab (File ID)",
+      "Logo Gugus (File ID)",
+      "Logo Sekolah (File ID)"
+    ]);
+  }
+
+  const sekolahNama = (data.sekolah || "").toString().trim();
+
+  if(!sekolahNama){
+    throw new Error("Nama sekolah wajib diisi.");
+  }
+
+  const values = sheet.getDataRange().getValues();
+  let rowIndex = -1; // index di array 'values' (0-based), baris header = 0
+
+  for(let i=1;i<values.length;i++){
+    const namaDiSheet = (values[i][0] || "").toString().trim().toLowerCase();
+    if(namaDiSheet === sekolahNama.toLowerCase()){
+      rowIndex = i;
+      break;
+    }
+  }
+
+  const existing = rowIndex >= 0 ? values[rowIndex] : ["","","","","","",""];
+
+  // Kalau ada file logo baru diupload, simpan ke Drive & pakai ID barunya.
+  // Kalau tidak ada upload baru, pertahankan ID logo yang lama.
+  const logoKabId =
+    data.logoKabBase64
+    ? uploadLogoImage(data.logoKabBase64, data.logoKabMime, sekolahNama + " - Logo Kab")
+    : (existing[4] || "");
+
+  const logoGugusId =
+    data.logoGugusBase64
+    ? uploadLogoImage(data.logoGugusBase64, data.logoGugusMime, sekolahNama + " - Logo Gugus")
+    : (existing[5] || "");
+
+  const logoSekolahId =
+    data.logoSekolahBase64
+    ? uploadLogoImage(data.logoSekolahBase64, data.logoSekolahMime, sekolahNama + " - Logo Sekolah")
+    : (existing[6] || "");
+
+  const rowData = [
+    sekolahNama,
+    data.kepsek || existing[1] || "",
+    data.nip || existing[2] || "",
+    data.tempat || existing[3] || "",
+    logoKabId,
+    logoGugusId,
+    logoSekolahId
+  ];
+
+  if(rowIndex >= 0){
+    // rowIndex adalah index array (0-based, sudah termasuk header di index 0)
+    // baris di spreadsheet = rowIndex + 1
+    sheet.getRange(rowIndex + 1, 1, 1, rowData.length).setValues([rowData]);
+  } else {
+    sheet.appendRow(rowData);
+  }
+
+  return { status: "success" };
+
+}
+
+
+
+/*********************************************************
+ * GENERATE PIAGAM (PDF) DARI TEMPLATE GOOGLE DOCS (WORD)
+ *********************************************************/
+
+function getNextNomorPiagam(){
+
+  // Nomor tersimpan permanen di Script Properties, tidak akan reset
+  // walau spreadsheet dibuka ulang atau script di-deploy ulang.
+  const props = PropertiesService.getScriptProperties();
+  const tahun = new Date().getFullYear();
+  const key = "NOMOR_PIAGAM_" + tahun;
+
+  let counter = Number(props.getProperty(key) || "0");
+  counter = counter + 1;
+
+  props.setProperty(key, String(counter));
+
+  // Format: 0001/PIAGAM/2026
+  const counterStr = String(counter).padStart(4, "0");
+  return counterStr + "/PIAGAM/" + tahun;
+
+}
+
+
+
+function generateSertifikat(templateId, folderId, row){
+
+  if(!templateId || templateId.indexOf("GANTI_DENGAN") === 0){
+    throw new Error("TEMPLATE_ID belum diisi di bagian atas script.");
+  }
+  if(!folderId || folderId.indexOf("GANTI_DENGAN") === 0){
+    throw new Error("FOLDER_ID belum diisi di bagian atas script.");
+  }
+
+  const cfg = getSekolahConfig(row.sekolah || "");
+  const nomorPiagam = getNextNomorPiagam();
+
+  const copyFile = DriveApp.getFileById(templateId)
+    .makeCopy(`Piagam - ${row.nama}`, DriveApp.getFolderById(folderId));
+
+  const doc = DocumentApp.openById(copyFile.getId());
+  const body = doc.getBody();
+
+  body.replaceText("{{NOMOR}}", nomorPiagam);
+  body.replaceText("{{NAMA}}", row.nama || "");
+  body.replaceText("{{NISN}}", row.nisn || "-");
+  body.replaceText("{{MAPEL}}", row.mapel || "");
+  body.replaceText("{{NILAI}}", String(row.nilai || 0));
+  body.replaceText("{{PREDIKAT}}", getPredikat(row.nilai || 0));
+  body.replaceText("{{SEKOLAH}}", row.sekolah || "");
+  body.replaceText("{{KEPSEK}}", cfg.kepsek || "…………………………");
+  body.replaceText("{{NIP}}", cfg.nip || "…………………………");
+  body.replaceText("{{TEMPAT}}", cfg.tempat || row.sekolah || "");
+  body.replaceText("{{TANGGAL}}", Utilities.formatDate(new Date(), "GMT+8", "dd MMMM yyyy"));
+
+  // Pasang logo (jika file ID tersedia di sheet Konfigurasi)
+  replacePlaceholderWithImage(body, "{{LOGO_KAB}}", cfg.logoKabId, 55);
+  replacePlaceholderWithImage(body, "{{LOGO_GUGUS}}", cfg.logoGugusId, 55);
+  replacePlaceholderWithImage(body, "{{LOGO_SEKOLAH}}", cfg.logoSekolahId, 55);
+
+  doc.saveAndClose();
+
+  const pdfBlob = copyFile.getAs("application/pdf");
+  const pdfFile = DriveApp.getFolderById(folderId)
+    .createFile(pdfBlob)
+    .setName(`Piagam - ${row.nama}.pdf`);
+
+  copyFile.setTrashed(true);
+
+  return pdfFile.getUrl();
+
+}
+
+
+
+function getPredikat(nilai){
+
+  if(nilai >= 90) return "Sangat Baik";
+  if(nilai >= 80) return "Baik";
+  if(nilai >= 70) return "Cukup";
+  return "Perlu Bimbingan";
+
+}
+
+
+
+/*********************************************************
+ * FUNGSI TEST — GUNAKAN INI UNTUK MENGUJI COBA SISTEM
+ * Jalankan fungsi ini dari editor (bukan saveRekapEntry
+ * langsung), lalu cek sheet "Rekap" dan folder Drive.
+ *********************************************************/
+
+function testGenerate(){
+
+  const hasil = saveRekapEntry({
+    nama: "Test Siswa",
+    nisn: "1234567890",
+    sekolah: "SDN 1 Contoh",
+    mapel: "matematika",
+    benar: 8,
+    total: 10,
+    nilai: 80,
+    waktu: "10:00"
+  });
+
+  console.log("Hasil test:", JSON.stringify(hasil));
+
+}
