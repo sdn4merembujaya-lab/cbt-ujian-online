@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ujian Online — Login</title>
+<style>
+  :root{
+    --purple-500:#7c3aed;
+    --purple-600:#6d28d9;
+    --purple-700:#5b21b6;
+    --purple-50:#f5f3ff;
+    --purple-100:#ede9fe;
+    --ink:#1f2937;
+    --muted:#6b7280;
+    --border:#e5e7eb;
+    --bg:#eef0f6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--bg);
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    color:var(--ink);
+  }
+  .brand-bar{
+    background:var(--purple-700);
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .brand-icon{
+    width:38px;height:38px;
+    border-radius:10px;
+    background:rgba(255,255,255,0.15);
+    display:flex;align-items:center;justify-content:center;
+    font-size:19px;
+    flex-shrink:0;
+  }
+  .brand-title{ color:#fff; font-weight:800; font-size:16px; line-height:1.2; }
+  .brand-sub{ color:rgba(255,255,255,0.7); font-size:11.5px; line-height:1.2; }
+  .page{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px 16px;
+  }
+  .card{
+    background:#fff;
+    width:100%;
+    max-width:380px;
+    border-radius:18px;
+    padding:22px 24px 20px;
+    box-shadow:0 20px 50px rgba(31,25,60,0.10), 0 2px 8px rgba(31,25,60,0.06);
+  }
+  .icon{
+    width:44px;height:44px;
+    margin:0 auto 10px;
+    background:var(--purple-100);
+    border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;
+  }
+  h1{ text-align:center; font-size:19px; font-weight:700; color:var(--ink); margin:0 0 4px; }
+  .subtitle{ text-align:center; color:var(--muted); font-size:12.5px; margin:0 0 14px; line-height:1.4; }
+  .error{
+    display:none;
+    background:#fef2f2;
+    color:#b91c1c;
+    border:1px solid #fecaca;
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:12px;
+    margin-bottom:10px;
+    line-height:1.5;
+    white-space:pre-wrap;
+  }
+  .diag{
+    display:none;
+    background:#fffbeb;
+    color:#92400e;
+    border:1px solid #fde68a;
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:11.5px;
+    margin-bottom:10px;
+    line-height:1.5;
+  }
+  label.field-label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink); margin-bottom:5px; }
+  .text-field{ margin-bottom:10px; }
+  .text-field input{
+    width:100%;
+    padding:9px 12px;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    font-size:13.5px;
+    color:var(--ink);
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .text-field input:focus{ border-color:var(--purple-500); box-shadow:0 0 0 3px rgba(124,58,237,0.12); }
+  .text-field input::placeholder{ color:#b3b8c2; }
+  .select-wrap{ position:relative; margin-bottom:10px; }
+  .select-wrap select{
+    width:100%;
+    appearance:none;
+    -webkit-appearance:none;
+    padding:9px 36px 9px 12px;
+    border:1.5px solid var(--purple-500);
+    border-radius:10px;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--ink);
+    background:#fff;
+    outline:none;
+    cursor:pointer;
+    box-shadow:0 0 0 3px rgba(124,58,237,0.10);
+  }
+  .select-wrap::after{
+    content:'▾'; position:absolute; right:14px; top:50%;
+    transform:translateY(-50%); color:var(--purple-600); font-size:13px; pointer-events:none;
+  }
+  button.submit{
+    width:100%;
+    padding:11px;
+    margin-top:2px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg, var(--purple-500), var(--purple-700));
+    color:#fff;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:transform .1s ease, box-shadow .15s ease;
+    box-shadow:0 8px 20px rgba(109,40,217,0.28);
+  }
+  button.submit:hover{ box-shadow:0 10px 24px rgba(109,40,217,0.36); }
+  button.submit:active{ transform:translateY(1px); }
+  button.submit:disabled{ opacity:.6; cursor:not-allowed; }
+  button.test-api{
+    width:100%;
+    padding:9px;
+    margin-top:8px;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    background:#fff;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  button.test-api:hover{ border-color:var(--purple-500); color:var(--purple-700); }
+</style>
+</head>
+<body>
+
+<div class="brand-bar">
+  <div class="brand-icon">🎓</div>
+  <div>
+    <div class="brand-title">Computer Based Test-SD</div>
+    <div class="brand-sub">Sistem Ujian Terpadu</div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="card">
+    <div class="icon">🎓</div>
+    <h1>Ujian Online</h1>
+    <p class="subtitle">Pilih peran, masukkan nama, asal sekolah &amp; password Anda</p>
+
+    <div class="diag" id="diagBox"></div>
+    <div class="error" id="errorBox">Lengkapi semua kolom sebelum masuk.</div>
+
+    <form id="loginForm">
+      <label class="field-label" for="peran">Pilih Peran / Akses User</label>
+      <div class="select-wrap">
+        <select id="peran">
+          <option value="siswa">🎓 Siswa</option>
+          <option value="guru">🧑‍🏫 Guru</option>
+          <option value="admin">👑 Admin</option>
+        </select>
+      </div>
+
+      <div class="text-field">
+        <label class="field-label" for="nama" id="labelNama">Nama Lengkap Siswa</label>
+        <input type="text" id="nama" placeholder="Contoh: Ahmad Fauzi" required>
+      </div>
+
+      <div class="text-field" id="fieldNisn">
+        <label class="field-label" for="nisn">NISN</label>
+        <input type="text" id="nisn" inputmode="numeric" placeholder="Contoh: 50200798">
+      </div>
+
+      <div class="text-field">
+        <label class="field-label" for="sekolah">Asal Sekolah (SD)</label>
+        <input type="text" id="sekolah" placeholder="Contoh: SDN 1 Merdeka" required>
+      </div>
+
+      <div class="text-field">
+        <label class="field-label" for="password">Kata Sandi (Password)</label>
+        <input type="password" id="password" placeholder="Masukkan password" required>
+      </div>
+
+      <button type="submit" class="submit">Masuk Ke Ujian</button>
+    </form>
+
+    <button type="button" class="test-api" id="btnTestApi">🔧 Tes Koneksi ke Server (klik jika login gagal)</button>
+  </div>
+</div>
+
+<script>
+  /* =====================================================================
+   * WAJIB DIISI: URL Web App Apps Script (yang diakhiri /exec)
+   * Cara dapatnya: Apps Script -> Deploy -> Manage deployments
+   * -> salin URL dari "Active deployments" (BUKAN dari "Test deployments",
+   *    dan BUKAN dari "New deployment" kalau kamu belum benar-benar
+   *    membuat versi baru — kalau kamu buat deployment BARU, URL-nya
+   *    berubah, jadi wajib disalin ulang ke sini dan ke ujian.html)
+   *
+   * Halaman login.html dan ujian.html ini HARUS di-hosting sebagai file
+   * statis (GitHub Pages/Netlify/dll), BUKAN dibuka lewat URL Apps Script,
+   * supaya kamera bisa berfungsi di halaman ujian.
+   * ===================================================================== */
+  var API_URL = "https://script.google.com/macros/s/AKfycbwc8u0_6420FLWOeFGJ3ZARO6nvOlj1yULKw5LxLuszv7E-sRt38byI1UuIG0xCuj5P/exec";
+
+  // File "ujian.html" harus ada di folder yang sama dengan login.html ini
+  // di hosting statis Anda.
+  var HALAMAN_UJIAN = "ujian.html";
+
+  // Halaman Admin/Guru dijalankan lewat Apps Script (aman di iframe, tidak butuh kamera).
+  var HALAMAN_ADMIN_APPSCRIPT = API_URL + "?page=admin";
+
+  var form = document.getElementById('loginForm');
+  var errorBox = document.getElementById('errorBox');
+  var diagBox = document.getElementById('diagBox');
+  var submitBtn = form.querySelector('button.submit');
+  var fieldNisn = document.getElementById('fieldNisn');
+  var selectPeran = document.getElementById('peran');
+  var labelNama = document.getElementById('labelNama');
+
+  var labelNamaPerPeran = {
+    siswa: 'Nama Lengkap Siswa',
+    guru: 'Nama Lengkap Guru',
+    admin: 'Nama Lengkap Admin'
+  };
+
+  function updateTampilanPeran(){
+    var peran = selectPeran.value;
+    fieldNisn.style.display = (peran === 'siswa') ? 'block' : 'none';
+    labelNama.textContent = labelNamaPerPeran[peran] || 'Nama Lengkap';
+  }
+  selectPeran.addEventListener('change', updateTampilanPeran);
+  updateTampilanPeran();
+
+  function tampilkanError(pesan){
+    errorBox.textContent = pesan;
+    errorBox.style.display = 'block';
+  }
+  function sembunyikanError(){
+    errorBox.style.display = 'none';
+  }
+  function tampilkanDiag(pesan){
+    diagBox.textContent = pesan;
+    diagBox.style.display = 'block';
+  }
+
+  /**
+   * panggilApi membedakan 3 jenis kegagalan supaya gampang didiagnosis:
+   * 1) requestGagal   -> fetch() sendiri gagal (jaringan putus, URL salah, atau
+   *                      CORS diblokir browser sebelum sempat baca respons)
+   * 2) responsBukanJson -> server merespons tapi bukan JSON (biasanya berarti
+   *                      URL API_URL salah/basi, deployment belum "Anyone",
+   *                      atau server mengembalikan halaman error/login Google)
+   * 3) res.sukses === false -> server berhasil dihubungi & merespons JSON,
+   *                      tapi logikanya menolak (pesan dari cekLogin, misal
+   *                      password salah / peran tidak cocok)
+   */
+  function panggilApi(action, data){
+    return fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: action, data: data })
+    })
+    .catch(function(err){
+      throw { jenis: 'requestGagal', pesan: err.message };
+    })
+    .then(function(r){
+      return r.text().then(function(teks){
+        var parsed;
+        try {
+          parsed = JSON.parse(teks);
+        } catch(e) {
+          console.error('Respons mentah dari server (bukan JSON):', teks);
+          throw {
+            jenis: 'responsBukanJson',
+            pesan: 'Server tidak mengembalikan JSON yang valid.',
+            mentah: teks.slice(0, 300)
+          };
+        }
+        return parsed;
+      });
+    });
+  }
+
+  document.getElementById('btnTestApi').addEventListener('click', function(){
+    sembunyikanError();
+    diagBox.style.display = 'none';
+    tampilkanDiag('Menguji koneksi ke server...');
+    panggilApi('daftarMapel', {})
+      .then(function(res){
+        tampilkanDiag('✅ Server BISA dihubungi. Daftar mapel diterima: ' + (Array.isArray(res) ? res.join(', ') : JSON.stringify(res)) + '\n\nJika login tetap gagal, kemungkinan besar masalahnya di data sheet "admin" (peran/password tidak cocok), bukan di koneksi.');
+      })
+      .catch(function(err){
+        if(err && err.jenis === 'requestGagal'){
+          tampilkanDiag('❌ Gagal menghubungi server (jaringan/CORS): ' + err.pesan + '\n\nCek: apakah API_URL di kode ini sudah benar & deployment Apps Script diset "Who has access: Anyone"?');
+        } else if(err && err.jenis === 'responsBukanJson'){
+          tampilkanDiag('❌ Server merespons tapi BUKAN JSON. Kemungkinan API_URL salah/basi (URL deployment berubah), atau deployment butuh login Google.\n\nPotongan respons server:\n' + err.mentah);
+        } else {
+          tampilkanDiag('❌ Terjadi kesalahan tak terduga: ' + (err && err.pesan ? err.pesan : JSON.stringify(err)));
+        }
+      });
+  });
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var peran = selectPeran.value;
+    var nama = document.getElementById('nama').value.trim();
+    var nisn = document.getElementById('nisn').value.trim();
+    var sekolah = document.getElementById('sekolah').value.trim();
+    var password = document.getElementById('password').value.trim();
+
+    diagBox.style.display = 'none';
+
+    if(!nama || !sekolah || !password || (peran === 'siswa' && !nisn)){
+      tampilkanError('Lengkapi semua kolom sebelum masuk.');
+      return;
+    }
+    sembunyikanError();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Memproses...';
+
+    panggilApi('login', { peran: peran, nama: nama, nisn: nisn, sekolah: sekolah, password: password })
+      .then(function(res){
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Masuk Ke Ujian';
+
+        if(!res.sukses){
+          tampilkanError(res.pesan || 'Login gagal. Cek kembali peran, nama, sekolah, dan password.');
+          return;
+        }
+
+        sessionStorage.setItem('ujian_token', res.token);
+        sessionStorage.setItem('ujian_nama', nama);
+        sessionStorage.setItem('ujian_nisn', nisn);
+        sessionStorage.setItem('ujian_sekolah', sekolah);
+        sessionStorage.setItem('ujian_peran', peran);
+
+        if(res.halaman === 'ujian'){
+          window.location.href = HALAMAN_UJIAN;
+        } else if(res.halaman === 'admin'){
+          window.location.href = HALAMAN_ADMIN_APPSCRIPT;
+        } else {
+          tampilkanError('Halaman untuk peran "' + peran + '" belum tersedia.');
+        }
+      })
+      .catch(function(err){
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Masuk Ke Ujian';
+
+        if(err && err.jenis === 'requestGagal'){
+          tampilkanError('Tidak bisa menghubungi server.\nSebab: ' + err.pesan + '\n\nKlik tombol "Tes Koneksi ke Server" di bawah untuk diagnosis lebih lanjut.');
+        } else if(err && err.jenis === 'responsBukanJson'){
+          tampilkanError('Server merespons tapi formatnya tidak dikenali (kemungkinan API_URL basi/salah, atau akses deployment belum "Anyone").\n\nKlik tombol "Tes Koneksi ke Server" untuk lihat detailnya.');
+        } else {
+          tampilkanError('Terjadi kesalahan tak terduga: ' + (err && err.pesan ? err.pesan : String(err)));
+        }
+      });
+  });
+</script>
+
+</body>
+</html>
