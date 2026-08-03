@@ -3,434 +3,361 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — Konfigurasi Sekolah &amp; Logo Piagam</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Public+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
-</head>
-<body>
-
-<div id="app"></div>
-
-<script>
-/* =========================================================
-   GANTI INI DENGAN URL WEB APP APPS SCRIPT KAMU
-   (Harus sama persis dengan yang dipakai di index.html)
-   ========================================================= */
-const API_URL = "https://script.google.com/macros/s/AKfycbwc8u0_6420FLWOeFGJ3ZARO6nvOlj1yULKw5LxLuszv7E-sRt38byI1UuIG0xCuj5P/exec";
-</script>
-
+<title>Ujian Online — Dashboard</title>
 <style>
   :root{
-    --ink:#1b2a4a;
-    --ink-soft:#4a5878;
-    --paper:#f7f3ea;
-    --paper-raised:#ffffff;
-    --gold:#c08a3e;
-    --gold-soft:#e8d7b8;
-    --green:#3f6b4f;
-    --red:#a23b3b;
-    --border:#dcd3c0;
-    --radius:14px;
-    --shadow: 0 1px 2px rgba(27,42,74,0.06), 0 8px 24px rgba(27,42,74,0.08);
+    --purple-500:#7c3aed;
+    --purple-600:#6d28d9;
+    --purple-700:#5b21b6;
+    --purple-50:#f5f3ff;
+    --purple-100:#ede9fe;
+    --ink:#1f2937;
+    --muted:#6b7280;
+    --border:#e5e7eb;
+    --bg:#eef0f6;
+    --amber-50:#fffbeb;
+    --amber-600:#d97706;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
   body{
-    background:
-      radial-gradient(1200px 600px at 10% -10%, #fffdf7 0%, transparent 60%),
-      var(--paper);
-    color:var(--ink);
-    font-family:'Public Sans', system-ui, sans-serif;
+    margin:0;
     min-height:100vh;
+    background:var(--bg);
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    color:var(--ink);
+  }
+  .topbar{
+    background:linear-gradient(135deg, var(--purple-600), var(--purple-700));
+    color:#fff;
+    padding:28px 24px 60px;
+  }
+  .topbar-inner{
+    max-width:760px;
+    margin:0 auto;
     display:flex;
     align-items:flex-start;
-    justify-content:center;
-    padding:32px 16px 80px;
+    justify-content:space-between;
+    gap:16px;
   }
-  h1,h2{ font-family:'Fraunces', serif; margin:0; letter-spacing:-0.01em; }
-  #app{ width:100%; max-width:620px; }
-
-  .header{
-    background:var(--ink);
+  .topbar .eyebrow{
+    font-size:12.5px;
+    font-weight:700;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    opacity:.75;
+    margin-bottom:6px;
+  }
+  .topbar h1{
+    margin:0 0 4px;
+    font-size:24px;
+    font-weight:700;
+  }
+  .topbar .sub{
+    font-size:14px;
+    opacity:.85;
+  }
+  .btn-logout{
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:rgba(255,255,255,0.14);
     color:#fff;
-    border-radius:var(--radius) var(--radius) 0 0;
-    padding:22px 26px;
+    border:1.5px solid rgba(255,255,255,0.35);
+    border-radius:10px;
+    padding:8px 14px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .btn-logout:hover{
+    background:rgba(255,255,255,0.24);
+    border-color:rgba(255,255,255,0.55);
+  }
+  .wrap{
+    max-width:760px;
+    margin:-38px auto 60px;
+    padding:0 20px;
+  }
+  .card{
+    background:#fff;
+    border-radius:20px;
+    padding:24px;
+    box-shadow:0 10px 30px rgba(31,25,60,0.10);
+    margin-bottom:20px;
+  }
+  .card h2{
+    font-size:16px;
+    margin:0 0 4px;
+  }
+  .card p.desc{
+    color:var(--muted);
+    font-size:13px;
+    margin:0 0 18px;
+  }
+
+  .stat-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-bottom:6px;
+  }
+  .stat-box{
+    background:var(--purple-50);
+    border-radius:14px;
+    padding:16px;
+  }
+  .stat-box .num{
+    font-size:28px;
+    font-weight:800;
+    color:var(--purple-700);
+  }
+  .stat-box .label{
+    font-size:12.5px;
+    color:var(--muted);
+    margin-top:2px;
+  }
+
+  .mapel-row{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    gap:12px;
+    padding:12px 0;
+    border-top:1px solid var(--border);
   }
-  .header .eyebrow{
-    font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
-    color:var(--gold-soft); font-weight:700; margin-bottom:6px;
-  }
-  .header h1{ font-size:23px; font-weight:600; }
-  .header p{ margin:8px 0 0; font-size:13.5px; color:#c9d0e0; line-height:1.5; }
-  .logout-btn{
-    background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.25);
-    border-radius:8px; padding:8px 14px; font-size:13px; font-family:inherit;
-    font-weight:600; cursor:pointer; white-space:nowrap; flex-shrink:0;
-  }
-  .logout-btn:hover{ background:rgba(255,255,255,0.2); }
-
-  .card{
-    background:var(--paper-raised);
-    border:1px solid var(--border);
-    border-radius:0 0 var(--radius) var(--radius);
-    box-shadow:var(--shadow);
-    padding:28px 26px;
+  .mapel-row:first-of-type{border-top:none; padding-top:4px;}
+  .mapel-row .nama{font-weight:600; font-size:14.5px; text-transform:capitalize;}
+  .mapel-row .meta{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .mapel-row .nilai{
+    font-size:20px;
+    font-weight:800;
+    color:var(--purple-700);
   }
 
-  .section-title{
-    font-size:13px; font-weight:700; text-transform:uppercase;
-    letter-spacing:0.06em; color:var(--gold); margin:24px 0 12px;
+  .link-list{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
   }
-  .section-title:first-child{ margin-top:0; }
-
-  .field{margin-bottom:16px;}
-  .field label{
-    display:block; font-size:13px; font-weight:600;
-    color:var(--ink-soft); margin-bottom:6px;
+  @media (max-width:520px){
+    .link-list{ grid-template-columns:1fr; }
   }
-  .field .hint{
-    font-size:12px; color:var(--ink-soft); margin-top:5px; line-height:1.5;
-  }
-  .field input[type="text"], .field input[type="password"], .field select{
-    width:100%; padding:11px 13px; border:1.5px solid var(--border);
-    border-radius:9px; font-size:15px; font-family:inherit;
-    background:#fdfcf9; color:var(--ink);
-  }
-  .field input:focus, .field select:focus{ outline:none; border-color:var(--gold); }
-
-  .upload-box{
-    border:1.5px dashed var(--border);
-    border-radius:10px;
-    padding:16px;
-    background:#fdfcf9;
+  .link-item{
     display:flex;
     align-items:center;
-    gap:14px;
-    cursor:pointer;
-    transition:border-color .15s, background .15s;
+    justify-content:space-between;
+    border:1.5px solid var(--border);
+    border-radius:14px;
+    padding:12px 14px;
+    text-decoration:none;
+    color:var(--ink);
+    transition:border-color .15s ease, background .15s ease;
   }
-  .upload-box:hover{ border-color:var(--gold); background:#fbf6ea; }
-  .upload-box input{ display:none; }
-  .upload-preview{
-    width:48px; height:48px; border-radius:8px;
-    background:var(--border);
-    display:flex; align-items:center; justify-content:center;
-    overflow:hidden; flex-shrink:0;
+  .link-item:hover{
+    border-color:var(--purple-500);
+    background:var(--purple-50);
   }
-  .upload-preview img{ width:100%; height:100%; object-fit:contain; }
-  .upload-text{ font-size:13.5px; color:var(--ink-soft); }
-  .upload-text b{ color:var(--ink); }
+  .link-item .left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+  }
+  .link-item .icon{
+    width:32px;height:32px;
+    border-radius:9px;
+    background:var(--purple-100);
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;
+    flex-shrink:0;
+  }
+  .link-item .name{
+    font-weight:600;
+    font-size:13.5px;
+    text-transform:capitalize;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .link-item .tag{
+    font-size:11px;
+    color:var(--muted);
+  }
+  .link-item .arrow{
+    color:var(--purple-600);
+    font-size:15px;
+    flex-shrink:0;
+  }
 
-  .btn{
-    display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    width:100%; padding:13px 18px; border:none; border-radius:9px;
-    background:var(--ink); color:#fff; font-family:inherit; font-size:15px;
-    font-weight:600; cursor:pointer; transition:background .15s;
-    margin-top:8px;
+  .empty-state{
+    text-align:center;
+    color:var(--muted);
+    font-size:13.5px;
+    padding:20px 0;
   }
-  .btn:hover{ background:#243a63; }
-  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
-
-  .alert{ padding:12px 14px; border-radius:8px; font-size:13.5px; margin-bottom:16px; }
-  .alert-error{ background:#f7e8e6; color:var(--red); border:1px solid #e5bcb6; }
-  .alert-success{ background:#e6f0e9; color:var(--green); border:1px solid #b9d9c3; }
-
-  .spinner{
-    width:16px; height:16px; border:2.5px solid rgba(255,255,255,0.4);
-    border-top-color:#fff; border-radius:50%;
-    animation:spin .7s linear infinite; display:inline-block;
+  .loading{
+    text-align:center;
+    color:var(--muted);
+    font-size:13.5px;
+    padding:30px 0;
   }
-  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .error-box{
+    background:#fef2f2;
+    color:#b91c1c;
+    border:1px solid #fecaca;
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:13px;
+    line-height:1.5;
+    white-space:pre-wrap;
+  }
 </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <div class="eyebrow">Dashboard</div>
+      <h1 id="namaSekolah">Memuat...</h1>
+      <div class="sub" id="infoKepsek">Memuat data sekolah...</div>
+    </div>
+    <button class="btn-logout" id="btnLogout" type="button">🚪 Logout</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>Ringkasan Ujian</h2>
+    <p class="desc">Rekap keseluruhan pengerjaan ujian siswa.</p>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="num" id="totalPengerjaan">-</div>
+        <div class="label">Total ujian dikerjakan</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="totalMapel">-</div>
+        <div class="label">Mata pelajaran aktif</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Rata-rata Nilai per Mapel</h2>
+    <p class="desc">Berdasarkan data di sheet Rekap.</p>
+    <div id="statistikMapel">
+      <div class="loading">Memuat statistik...</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Akses Cepat ke Google Sheets</h2>
+    <p class="desc">Kelola soal, konfigurasi, dan data langsung di spreadsheet.</p>
+    <div class="link-list" id="daftarLink">
+      <div class="loading">Memuat daftar sheet...</div>
+    </div>
+  </div>
+
+</div>
 
 <script>
-const SESSION_KEY = "cbt_admin_session";
+  /* =====================================================================
+   * WAJIB DIISI: sama persis dengan API_URL di login.html
+   * ===================================================================== */
+  var API_URL = "https://script.google.com/macros/s/AKfycbwc8u0_6420FLWOeFGJ3ZARO6nvOlj1yULKw5LxLuszv7E-sRt38byI1UuIG0xCuj5P/exec";
 
-const state = {
-  auth: {
-    loggedIn: false,
-    username: null,
-    submitting: false,
-    message: null
-  },
-  logos: { logoKab:null, logoGugus:null, logoSekolah:null },
-  submitting: false,
-  message: null // { type: 'error'|'success', text }
-};
+  // Halaman login di folder GitHub Pages yang sama
+  var URL_LOGIN = "login.html";
 
-const app = document.getElementById("app");
+  var ikonPerJenis = {
+    'Konfigurasi': '⚙️',
+    'Rekap': '📊',
+    'Monitoring': '📷',
+    'admin': '🔑'
+  };
 
-/* ================= INIT: cek sesi login tersimpan ================= */
-(function initAuth(){
-  try{
-    const saved = sessionStorage.getItem(SESSION_KEY);
-    if(saved){
-      const parsed = JSON.parse(saved);
-      if(parsed && parsed.username){
-        state.auth.loggedIn = true;
-        state.auth.username = parsed.username;
-      }
-    }
-  }catch(err){ /* abaikan, anggap belum login */ }
-})();
-
-function render(){
-  if(!state.auth.loggedIn){
-    renderLogin();
-  } else {
-    renderAdminApp();
-  }
-}
-
-/* ================= HALAMAN LOGIN ================= */
-
-function renderLogin(){
-  app.innerHTML = `
-    <div class="header">
-      <div>
-        <div class="eyebrow">Halaman Admin</div>
-        <h1>Masuk Admin</h1>
-        <p>Masukkan username &amp; password untuk mengakses konfigurasi sekolah.</p>
-      </div>
-    </div>
-    <div class="card">
-      ${state.auth.message ? `<div class="alert alert-${state.auth.message.type === 'error' ? 'error' : 'success'}">${escapeHtml(state.auth.message.text)}</div>` : ""}
-
-      <form id="formLogin">
-        <div class="field">
-          <label for="username">Username</label>
-          <input type="text" id="username" autocomplete="username" required placeholder="Contoh: admin">
-        </div>
-        <div class="field">
-          <label for="password">Password</label>
-          <input type="password" id="password" autocomplete="current-password" required placeholder="Masukkan password">
-        </div>
-
-        <button type="submit" class="btn" id="btnLogin" ${state.auth.submitting ? "disabled" : ""}>
-          ${state.auth.submitting ? `<span class="spinner"></span> Memeriksa...` : "Masuk"}
-        </button>
-      </form>
-    </div>
-  `;
-
-  document.getElementById("formLogin").addEventListener("submit", handleLogin);
-}
-
-async function handleLogin(e){
-  e.preventDefault();
-
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value;
-
-  if(!username || !password){
-    state.auth.message = { type:"error", text:"Username dan password wajib diisi." };
-    render();
-    return;
-  }
-
-  state.auth.submitting = true;
-  state.auth.message = null;
-  render();
-
-  try{
-    const res = await fetch(API_URL, {
-      method:"POST",
-      headers:{ "Content-Type":"text/plain;charset=utf-8" },
-      body: JSON.stringify({ action:"login", data:{ username, password } })
-    });
-    const result = await res.json();
-
-    if(result.status !== "success"){
-      throw new Error(result.message || "Username atau password salah.");
-    }
-
-    state.auth.loggedIn = true;
-    state.auth.username = result.username || username;
-    state.auth.message = null;
-
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: state.auth.username }));
-
-  }catch(err){
-    state.auth.message = { type:"error", text: err.message || "Gagal login." };
-  }
-
-  state.auth.submitting = false;
-  render();
-}
-
-function handleLogout(){
-  state.auth.loggedIn = false;
-  state.auth.username = null;
-  sessionStorage.removeItem(SESSION_KEY);
-  render();
-}
-
-/* ================= FORM KONFIGURASI (SETELAH LOGIN) ================= */
-
-function renderAdminApp(){
-  app.innerHTML = `
-    <div class="header">
-      <div>
-        <div class="eyebrow">Halaman Admin — ${escapeHtml(state.auth.username || "")}</div>
-        <h1>Konfigurasi Sekolah &amp; Logo Piagam</h1>
-        <p>Isi data sekolah dan upload logo di sini. Sistem otomatis menyimpannya ke Google Drive dan mengisi sheet Konfigurasi — tidak perlu cari File ID manual.</p>
-      </div>
-      <button class="logout-btn" id="btnLogout" type="button">Keluar</button>
-    </div>
-    <div class="card">
-      ${state.message ? `<div class="alert alert-${state.message.type === 'error' ? 'error' : 'success'}">${escapeHtml(state.message.text)}</div>` : ""}
-
-      <form id="formAdmin">
-        <div class="section-title">Data Sekolah</div>
-
-        <div class="field">
-          <label for="sekolah">Nama Sekolah</label>
-          <input type="text" id="sekolah" required placeholder="Contoh: SDN 4 Jakarta (harus sama persis dengan yang diisi siswa)">
-        </div>
-        <div class="field">
-          <label for="kepsek">Nama Kepala Sekolah</label>
-          <input type="text" id="kepsek" placeholder="Contoh: Budi Santoso, S.Pd">
-        </div>
-        <div class="field">
-          <label for="nip">NIP Kepala Sekolah</label>
-          <input type="text" id="nip" placeholder="Contoh: 196501011990031001">
-        </div>
-        <div class="field">
-          <label for="tempat">Tempat (untuk tanggal piagam)</label>
-          <input type="text" id="tempat" placeholder="Contoh: Jakarta">
-        </div>
-
-        <div class="section-title">Logo Piagam</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:16px;">Kosongkan kalau logonya sudah pernah diupload sebelumnya dan tidak mau diganti.</p>
-
-        ${renderUploadField("logoKab", "Logo Kabupaten / Kota")}
-        ${renderUploadField("logoGugus", "Logo Gugus")}
-        ${renderUploadField("logoSekolah", "Logo Sekolah")}
-
-        <button type="submit" class="btn" id="btnSubmit" ${state.submitting ? "disabled" : ""}>
-          ${state.submitting ? `<span class="spinner"></span> Menyimpan...` : "Simpan Konfigurasi"}
-        </button>
-      </form>
-    </div>
-  `;
-
-  document.getElementById("formAdmin").addEventListener("submit", handleSubmit);
-  document.getElementById("btnLogout").addEventListener("click", handleLogout);
-
-  ["logoKab","logoGugus","logoSekolah"].forEach(key=>{
-    const input = document.getElementById("input_"+key);
-    input.addEventListener("change", (e)=> handleFileSelect(key, e.target.files[0]));
+  document.getElementById('btnLogout').addEventListener('click', function(){
+    try{
+      sessionStorage.removeItem('ujian_token');
+      sessionStorage.removeItem('ujian_nama');
+      sessionStorage.removeItem('ujian_nisn');
+      sessionStorage.removeItem('ujian_sekolah');
+      sessionStorage.removeItem('ujian_peran');
+    }catch(e){}
+    window.location.href = URL_LOGIN;
   });
-}
 
-function renderUploadField(key, label){
-  const file = state.logos[key];
-  return `
-    <div class="field">
-      <label>${label}</label>
-      <label class="upload-box" for="input_${key}">
-        <div class="upload-preview" id="preview_${key}">
-          ${file ? `<img src="${file.dataUrl}">` : "🖼️"}
-        </div>
-        <div class="upload-text">
-          ${file ? `<b>${escapeHtml(file.name)}</b><br>Klik untuk ganti` : `<b>Klik untuk pilih gambar</b><br>PNG atau JPG`}
-        </div>
-        <input type="file" id="input_${key}" accept="image/png,image/jpeg">
-      </label>
-    </div>
-  `;
-}
-
-function handleFileSelect(key, file){
-  if(!file) return;
-
-  const reader = new FileReader();
-  reader.onload = ()=>{
-    state.logos[key] = {
-      name: file.name,
-      mime: file.type,
-      dataUrl: reader.result,
-      base64: reader.result.split(",")[1]
-    };
-    render();
-  };
-  reader.readAsDataURL(file);
-}
-
-async function handleSubmit(e){
-  e.preventDefault();
-
-  const payload = {
-    sekolah: document.getElementById("sekolah").value.trim(),
-    kepsek: document.getElementById("kepsek").value.trim(),
-    nip: document.getElementById("nip").value.trim(),
-    tempat: document.getElementById("tempat").value.trim()
-  };
-
-  if(state.logos.logoKab){
-    payload.logoKabBase64 = state.logos.logoKab.base64;
-    payload.logoKabMime = state.logos.logoKab.mime;
-  }
-  if(state.logos.logoGugus){
-    payload.logoGugusBase64 = state.logos.logoGugus.base64;
-    payload.logoGugusMime = state.logos.logoGugus.mime;
-  }
-  if(state.logos.logoSekolah){
-    payload.logoSekolahBase64 = state.logos.logoSekolah.base64;
-    payload.logoSekolahMime = state.logos.logoSekolah.mime;
+  function panggilApi(action, data){
+    return fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: action, data: data })
+    }).then(function(r){ return r.json(); });
   }
 
-  if(!payload.sekolah){
-    state.message = { type:"error", text:"Nama sekolah wajib diisi." };
-    render();
-    return;
+  function tampilkanError(pesan){
+    document.getElementById('namaSekolah').textContent = 'Terjadi kesalahan';
+    document.getElementById('infoKepsek').textContent = '';
+    document.getElementById('statistikMapel').innerHTML = '<div class="error-box">' + pesan + '</div>';
+    document.getElementById('daftarLink').innerHTML = '';
   }
 
-  if(!API_URL || API_URL.indexOf("GANTI_DENGAN") === 0){
-    state.message = { type:"error", text:"API_URL belum diisi di dalam file admin.html." };
-    render();
-    return;
-  }
+  panggilApi('ringkasanAdmin', {})
+    .then(function(data){
+      if(data && data.sukses === false){
+        tampilkanError(data.pesan || 'Gagal memuat data.');
+        return;
+      }
 
-  state.submitting = true;
-  state.message = null;
-  render();
+      document.getElementById('namaSekolah').textContent = data.sekolah || 'Ujian Online';
+      document.getElementById('infoKepsek').textContent = data.kepalaSekolah
+        ? 'Kepala Sekolah: ' + data.kepalaSekolah + (data.nip ? ' · NIP ' + data.nip : '')
+        : 'Data Kepala Sekolah & NIP belum diisi di sheet Konfigurasi';
 
-  try{
-    const res = await fetch(API_URL, {
-      method:"POST",
-      headers:{ "Content-Type":"text/plain;charset=utf-8" },
-      body: JSON.stringify({ action:"saveKonfigurasi", data: payload })
+      document.getElementById('totalPengerjaan').textContent = data.totalPengerjaan;
+      document.getElementById('totalMapel').textContent = data.statistik.length;
+
+      // Statistik per mapel
+      var statBox = document.getElementById('statistikMapel');
+      if(data.statistik.length === 0){
+        statBox.innerHTML = '<div class="empty-state">Belum ada data ujian masuk.</div>';
+      } else {
+        statBox.innerHTML = '';
+        data.statistik.forEach(function(s){
+          var row = document.createElement('div');
+          row.className = 'mapel-row';
+          row.innerHTML =
+            '<div><div class="nama">' + s.mapel + '</div>' +
+            '<div class="meta">' + s.jumlahPengerjaan + ' kali dikerjakan</div></div>' +
+            '<div class="nilai">' + s.rataRata + '</div>';
+          statBox.appendChild(row);
+        });
+      }
+
+      // Daftar link ke sheet
+      var linkBox = document.getElementById('daftarLink');
+      linkBox.innerHTML = '';
+      data.link.forEach(function(item){
+        var a = document.createElement('a');
+        a.href = item.url;
+        a.target = '_blank';
+        a.className = 'link-item';
+        var ikon = ikonPerJenis[item.nama] || (item.tipe === 'mapel' ? '📘' : '📄');
+        a.innerHTML =
+          '<div class="left"><div class="icon">' + ikon + '</div>' +
+          '<div><div class="name">' + item.nama + '</div>' +
+          '<div class="tag">' + (item.tipe === 'mapel' ? 'Sheet mata pelajaran' : 'Sheet sistem') + '</div></div></div>' +
+          '<div class="arrow">↗</div>';
+        linkBox.appendChild(a);
+      });
+    })
+    .catch(function(err){
+      tampilkanError('Tidak bisa menghubungi server.\nSebab: ' + err.message + '\n\nCek API_URL di kode ini, dan pastikan deployment Apps Script diset "Anyone".');
     });
-    const result = await res.json();
-
-    if(result.status === "error"){
-      throw new Error(result.message || "Gagal menyimpan konfigurasi.");
-    }
-
-    state.message = { type:"success", text:"Konfigurasi & logo berhasil disimpan. Coba generate piagam untuk melihat hasilnya." };
-    state.logos = { logoKab:null, logoGugus:null, logoSekolah:null };
-
-  }catch(err){
-    state.message = { type:"error", text: err.message || "Terjadi kesalahan." };
-  }
-
-  state.submitting = false;
-  render();
-}
-
-function escapeHtml(str){
-  if(str === undefined || str === null) return "";
-  return String(str)
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
-
-render();
 </script>
+
 </body>
 </html>
