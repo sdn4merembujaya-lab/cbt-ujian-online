@@ -486,11 +486,77 @@ let state = {
   answers: {},   // { questionId: "a" | teks }
   current: 0,
   isDemo: false,
-  timeLeft: 0    // detik tersisa
+  timeLeft: 0,    // detik tersisa
+  examEndTime: 0  // timestamp (ms) kapan ujian berakhir
 };
 let timerInterval = null;
+const SESSION_KEY = "cbt_ujian_session_v1";
 
 const $ = (id) => document.getElementById(id);
+
+/* ---------- SESI UJIAN (tahan refresh) ---------- */
+function saveSession(){
+  try{
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      nama: state.nama,
+      nisn: state.nisn,
+      sekolah: state.sekolah,
+      mapel: state.mapel,
+      answers: state.answers,
+      current: state.current,
+      examEndTime: state.examEndTime
+    }));
+  }catch(err){
+    console.error("Gagal menyimpan sesi:", err);
+  }
+}
+
+function clearSession(){
+  try{ localStorage.removeItem(SESSION_KEY); }catch(err){}
+}
+
+function loadSession(){
+  try{
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(err){
+    return null;
+  }
+}
+
+function resumeSessionIfAny(){
+  const saved = loadSession();
+  if(!saved || !saved.mapel || !state.bankSoal || !state.bankSoal[saved.mapel]){
+    return;
+  }
+
+  state.nama = saved.nama;
+  state.nisn = saved.nisn;
+  state.sekolah = saved.sekolah;
+  state.mapel = saved.mapel;
+  state.questions = state.bankSoal[saved.mapel] || [];
+  state.answers = saved.answers || {};
+  state.current = Math.min(saved.current || 0, Math.max(0, state.questions.length - 1));
+  state.examEndTime = saved.examEndTime || 0;
+
+  $("exam-mapel").textContent = state.mapel.toUpperCase();
+  $("exam-nama").textContent = state.nama;
+  $("exam-nisn").textContent = state.nisn;
+
+  $("screen-login").classList.add("hidden");
+  $("screen-exam").classList.remove("hidden");
+  document.querySelector(".wrap").classList.add("wrap-exam");
+
+  if(state.examEndTime <= Date.now()){
+    // waktu sudah habis selagi tab tertutup/refresh -> langsung kumpulkan otomatis
+    submitExam();
+    return;
+  }
+
+  renderNavigator();
+  renderQuestion();
+  resumeTimer();
+}
 
 /* ---------- MUAT BANK SOAL ---------- */
 async function loadBankSoal(){
@@ -499,6 +565,7 @@ async function loadBankSoal(){
     state.isDemo = true;
     $("demo-banner").classList.remove("hidden");
     populateMapel();
+    resumeSessionIfAny();
     return;
   }
   try{
@@ -506,12 +573,14 @@ async function loadBankSoal(){
     const data = await res.json();
     state.bankSoal = data;
     populateMapel();
+    resumeSessionIfAny();
   }catch(err){
     console.error(err);
     state.bankSoal = DEMO_DATA;
     state.isDemo = true;
     $("demo-banner").classList.remove("hidden");
     populateMapel();
+    resumeSessionIfAny();
   }
 }
 
@@ -557,21 +626,32 @@ $("btn-mulai").addEventListener("click", () => {
   renderNavigator();
   renderQuestion();
   startTimer();
+  saveSession();
 });
 
 /* ---------- TIMER ---------- */
 function startTimer(){
-  state.timeLeft = (CONFIG.DURASI_MENIT || 60) * 60;
-  updateTimerDisplay();
+  state.examEndTime = Date.now() + (CONFIG.DURASI_MENIT || 60) * 60 * 1000;
+  runTimerLoop();
+}
+
+function resumeTimer(){
+  runTimerLoop();
+}
+
+function runTimerLoop(){
   if(timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(()=>{
-    state.timeLeft--;
-    updateTimerDisplay();
-    if(state.timeLeft <= 0){
-      clearInterval(timerInterval);
-      submitExam();
-    }
-  }, 1000);
+  tickTimer();
+  timerInterval = setInterval(tickTimer, 1000);
+}
+
+function tickTimer(){
+  state.timeLeft = Math.max(0, Math.round((state.examEndTime - Date.now()) / 1000));
+  updateTimerDisplay();
+  if(state.timeLeft <= 0){
+    clearInterval(timerInterval);
+    submitExam();
+  }
 }
 
 function stopTimer(){
@@ -602,7 +682,7 @@ function renderNavigator(){
     item.textContent = idx + 1;
     if(state.answers[q.id] !== undefined && state.answers[q.id] !== "") item.classList.add("answered");
     if(idx === state.current) item.classList.add("current");
-    item.addEventListener("click", ()=>{ state.current = idx; renderQuestion(); });
+    item.addEventListener("click", ()=>{ state.current = idx; renderQuestion(); saveSession(); });
     nav.appendChild(item);
   });
   updateProgress();
@@ -653,6 +733,7 @@ function renderQuestion(){
         state.answers[q.id] = opt.id;
         renderNavigator();
         renderQuestion();
+        saveSession();
       });
       container.appendChild(div);
     });
@@ -664,6 +745,7 @@ function renderQuestion(){
     textarea.addEventListener("input", (e)=>{
       state.answers[q.id] = e.target.value;
       renderNavigator();
+      saveSession();
     });
     container.appendChild(textarea);
   }
@@ -678,7 +760,7 @@ function renderQuestion(){
 }
 
 $("btn-prev").addEventListener("click", ()=>{
-  if(state.current > 0){ state.current--; renderQuestion(); }
+  if(state.current > 0){ state.current--; renderQuestion(); saveSession(); }
 });
 
 $("btn-next").addEventListener("click", ()=>{
@@ -688,12 +770,14 @@ $("btn-next").addEventListener("click", ()=>{
   }else{
     state.current++;
     renderQuestion();
+    saveSession();
   }
 });
 
 /* ---------- SUBMIT ---------- */
 async function submitExam(){
   stopTimer();
+  clearSession();
   const pgQuestions = state.questions.filter(q=>q.tipe === "pg");
   let benar = 0;
   pgQuestions.forEach(q=>{
