@@ -78,7 +78,7 @@
   }
   .wrap{
     max-width:760px;
-    margin:-38px auto 60px;
+    margin:-38px auto 0;
     padding:0 20px;
   }
   .card{
@@ -203,15 +203,14 @@
     font-size:13.5px;
     padding:30px 0;
   }
-  .error-box{
-    background:#fef2f2;
-    color:#b91c1c;
-    border:1px solid #fecaca;
-    border-radius:10px;
-    padding:12px 14px;
-    font-size:13px;
-    line-height:1.5;
-    white-space:pre-wrap;
+
+  .footer-credit{
+    text-align:center;
+    color:var(--muted);
+    font-size:11.5px;
+    padding:4px 0 28px;
+    opacity:.75;
+    letter-spacing:.01em;
   }
 </style>
 </head>
@@ -261,23 +260,20 @@
     </div>
   </div>
 
+  <div class="footer-credit">Creations by Dee 4 Merembu</div>
+
 </div>
 
 <script>
-  /* =====================================================================
-   * WAJIB DIISI: sama persis dengan API_URL di login.html
-   * ===================================================================== */
-  var API_URL = "https://script.google.com/macros/s/AKfycbwc8u0_6420FLWOeFGJ3ZARO6nvOlj1yULKw5LxLuszv7E-sRt38byI1UuIG0xCuj5P/exec";
-
-  // Halaman login di folder GitHub Pages yang sama
-  var URL_LOGIN = "login.html";
-
   var ikonPerJenis = {
     'Konfigurasi': '⚙️',
     'Rekap': '📊',
     'Monitoring': '📷',
     'admin': '🔑'
   };
+
+  // URL halaman login (GitHub Pages). Sesuaikan kalau URL-nya berubah.
+  var URL_LOGIN = 'https://sdn4merembujaya-lab.github.io/cbt-ujian-online/login.html';
 
   document.getElementById('btnLogout').addEventListener('click', function(){
     try{
@@ -287,31 +283,11 @@
       sessionStorage.removeItem('ujian_sekolah');
       sessionStorage.removeItem('ujian_peran');
     }catch(e){}
-    window.location.href = URL_LOGIN;
+    window.top.location.href = URL_LOGIN;
   });
 
-  function panggilApi(action, data){
-    return fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: action, data: data })
-    }).then(function(r){ return r.json(); });
-  }
-
-  function tampilkanError(pesan){
-    document.getElementById('namaSekolah').textContent = 'Terjadi kesalahan';
-    document.getElementById('infoKepsek').textContent = '';
-    document.getElementById('statistikMapel').innerHTML = '<div class="error-box">' + pesan + '</div>';
-    document.getElementById('daftarLink').innerHTML = '';
-  }
-
-  panggilApi('ringkasanAdmin', {})
-    .then(function(data){
-      if(data && data.sukses === false){
-        tampilkanError(data.pesan || 'Gagal memuat data.');
-        return;
-      }
-
+  google.script.run
+    .withSuccessHandler(function(data){
       document.getElementById('namaSekolah').textContent = data.sekolah || 'Ujian Online';
       document.getElementById('infoKepsek').textContent = data.kepalaSekolah
         ? 'Kepala Sekolah: ' + data.kepalaSekolah + (data.nip ? ' · NIP ' + data.nip : '')
@@ -354,9 +330,11 @@
         linkBox.appendChild(a);
       });
     })
-    .catch(function(err){
-      tampilkanError('Tidak bisa menghubungi server.\nSebab: ' + err.message + '\n\nCek API_URL di kode ini, dan pastikan deployment Apps Script diset "Anyone".');
-    });
+    .withFailureHandler(function(err){
+      document.getElementById('namaSekolah').textContent = 'Terjadi kesalahan';
+      document.getElementById('infoKepsek').textContent = err.message;
+    })
+    .ambilRingkasanAdmin();
 </script>
 
 </body>
