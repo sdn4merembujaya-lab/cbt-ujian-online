@@ -186,6 +186,15 @@
 
   /* ===== SOAL ===== */
   .soal-index{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+  .soal-gambar{
+    width:100%;
+    max-height:280px;
+    object-fit:contain;
+    border-radius:10px;
+    border:1px solid var(--border);
+    margin-bottom:16px;
+    background:#fff;
+  }
   .soal-teks{
     font-size:14px;
     line-height:1.6;
@@ -366,6 +375,7 @@
       </div>
 
       <p class="soal-index" id="soal-index">Soal 1 / 35</p>
+      <img class="soal-gambar hidden" id="soal-gambar" alt="Gambar soal">
       <div class="soal-teks hidden" id="soal-teks"></div>
       <p class="pertanyaan" id="soal-pertanyaan">Memuat soal...</p>
       <div id="opsi-container"></div>
@@ -416,12 +426,12 @@ const DEMO_DATA = {
   "ips": [
     {id:1, readingText:"", question:"Kerajaan tertua di wilayah Nusantara adalah . . . .",
      options:[{id:"a",text:"Tarumanegara"},{id:"b",text:"Majapahit"},{id:"c",text:"Kutai"},{id:"d",text:"Singasari"}],
-     correctAnswer:"c", tipe:"pg"},
+     correctAnswer:"c", gambar:"", tipe:"pg"},
     {id:2, readingText:"", question:"Prasasti Ciaruteun adalah salah satu peninggalan Kerajaan . . . .",
      options:[{id:"a",text:"Kutai"},{id:"b",text:"Tarumanegara"},{id:"c",text:"Sriwijaya"},{id:"d",text:"Kalingga"}],
-     correctAnswer:"b", tipe:"pg"},
+     correctAnswer:"b", gambar:"", tipe:"pg"},
     {id:3, readingText:"", question:"Pesantren adalah tempat . . . .",
-     options:[], correctAnswer:"", tipe:"isian"}
+     options:[], correctAnswer:"", gambar:"", tipe:"isian"}
   ]
 };
 
@@ -438,6 +448,19 @@ let state = {
 };
 
 const $ = (id) => document.getElementById(id);
+
+/* ---------- UBAH LINK GOOGLE DRIVE JADI LINK GAMBAR LANGSUNG ----------
+   Kalau kolom "Gambar URL" di sheet diisi link share biasa
+   (https://drive.google.com/file/d/XXXX/view atau ?id=XXXX),
+   fungsi ini mengubahnya jadi format yang bisa langsung dipakai <img>.
+   Kalau bukan link Drive (link gambar biasa/https://...), dibiarkan apa adanya. */
+function convertDriveLink(url){
+  const match = url.match(/\/file\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
+  if(match && match[1]){
+    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+  }
+  return url;
+}
 
 /* ---------- MUAT BANK SOAL ---------- */
 async function loadBankSoal(){
@@ -548,6 +571,15 @@ function renderQuestion(){
     teksEl.classList.remove("hidden");
   }else{
     teksEl.classList.add("hidden");
+  }
+
+  const gambarEl = $("soal-gambar");
+  if(q.gambar && q.gambar.trim() !== ""){
+    gambarEl.src = convertDriveLink(q.gambar.trim());
+    gambarEl.classList.remove("hidden");
+  }else{
+    gambarEl.classList.add("hidden");
+    gambarEl.src = "";
   }
 
   $("soal-pertanyaan").textContent = q.question;
