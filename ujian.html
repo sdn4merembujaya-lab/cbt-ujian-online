@@ -453,6 +453,11 @@
   /* =====================================================================
    * WAJIB DIISI: URL Web App Apps Script (yang diakhiri /exec)
    * Harus SAMA PERSIS dengan yang diisi di login.html
+   *
+   * File ini HARUS dibuka sebagai halaman statis (GitHub Pages/Netlify/dll),
+   * BUKAN lewat URL Apps Script, supaya kamera bisa berfungsi dengan benar
+   * (halaman Apps Script dibungkus iframe sandbox Google yang membuat
+   * frame kamera tidak terbaca dengan benar / hasil foto jadi hitam).
    * ===================================================================== */
   var API_URL = "https://script.google.com/macros/s/AKfycbwc8u0_6420FLWOeFGJ3ZARO6nvOlj1yULKw5LxLuszv7E-sRt38byI1UuIG0xCuj5P/exec";
   var HALAMAN_LOGIN = "login.html";
@@ -564,10 +569,23 @@
   }
 
   function mulaiCapturePeriodik(){
-    setTimeout(function(){
-      ambilFotoDanKirim();
-      kameraCaptureInterval = setInterval(ambilFotoDanKirim, KAMERA_INTERVAL_DETIK * 1000);
-    }, 1000);
+    // Coba berulang tiap 300ms sampai frame video benar-benar siap
+    // (sensor kamera depan kadang butuh waktu warm-up lebih dari 1 detik),
+    // maksimal ~6 detik percobaan sebelum menyerah pada capture pertama.
+    var percobaan = 0;
+    function tunggu(){
+      percobaan++;
+      if(videoPreview.videoWidth > 0 && videoPreview.videoHeight > 0){
+        ambilFotoDanKirim();
+        kameraCaptureInterval = setInterval(ambilFotoDanKirim, KAMERA_INTERVAL_DETIK * 1000);
+      } else if(percobaan < 20){
+        setTimeout(tunggu, 300);
+      } else {
+        // tetap mulai interval reguler walau percobaan awal belum siap
+        kameraCaptureInterval = setInterval(ambilFotoDanKirim, KAMERA_INTERVAL_DETIK * 1000);
+      }
+    }
+    setTimeout(tunggu, 1500);
   }
 
   function hentikanKamera(){
