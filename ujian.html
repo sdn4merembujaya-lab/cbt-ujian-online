@@ -402,6 +402,7 @@
     <div id="kameraError" class="error-msg hidden"></div>
     <video id="videoPreview" class="video-preview" autoplay muted playsinline></video>
     <button class="btn-primary" style="width:100%" id="btnAktifkanKamera">📷 Aktifkan Kamera &amp; Lanjutkan</button>
+    <div id="debugKamera" style="font-size:11px;color:#555;background:#f3f4f6;padding:10px 12px;border-radius:10px;margin-top:12px;white-space:pre-wrap;font-family:monospace;line-height:1.5;"></div>
   </div>
 
   <div class="card hidden" id="stepMapel">
@@ -505,9 +506,32 @@
     aktifkanKamera();
   });
 
+  var debugBox = document.getElementById('debugKamera');
+  var debugInterval = null;
+  function tulisDebug(baris){
+    debugBox.textContent += baris + '\n';
+  }
+  function mulaiDebugLive(){
+    if(debugInterval) clearInterval(debugInterval);
+    debugInterval = setInterval(function(){
+      var tracks = kameraStream ? kameraStream.getVideoTracks() : [];
+      var infoTrack = tracks.map(function(t){
+        return t.label + ' | readyState=' + t.readyState + ' | enabled=' + t.enabled + ' | muted=' + t.muted;
+      }).join('\n');
+      debugBox.textContent =
+        '[DEBUG KAMERA - update tiap 1 detik]\n' +
+        'video.readyState: ' + videoPreview.readyState + ' (0=belum ada data, 4=siap penuh)\n' +
+        'video.videoWidth x videoHeight: ' + videoPreview.videoWidth + ' x ' + videoPreview.videoHeight + '\n' +
+        'video.paused: ' + videoPreview.paused + '\n' +
+        'video.currentTime: ' + videoPreview.currentTime.toFixed(2) + '\n' +
+        'Track kamera:\n' + (infoTrack || '(belum ada stream)');
+    }, 1000);
+  }
+
   function aktifkanKamera(){
     var errBox = document.getElementById('kameraError');
     errBox.classList.add('hidden');
+    debugBox.textContent = 'Memulai aktivasi kamera...\n';
 
     if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
       errBox.textContent = 'Perangkat/browser ini tidak mendukung akses kamera. Gunakan browser atau perangkat lain yang punya kamera.';
@@ -528,8 +552,12 @@
       .then(function(stream){
         kameraStream = stream;
         videoPreview.srcObject = stream;
-        document.getElementById('stepKamera').classList.add('hidden');
-        document.getElementById('stepMapel').classList.remove('hidden');
+        tulisDebug('getUserMedia SUKSES. Jumlah video track: ' + stream.getVideoTracks().length);
+        mulaiDebugLive();
+        // Sengaja TIDAK langsung pindah ke pilih mapel — biarkan panel debug
+        // & preview terlihat dulu selama beberapa detik supaya bisa dicek.
+        // (Nanti setelah masalah kamera selesai, baris di bawah ini boleh
+        // dikembalikan ke perilaku normal: pindah otomatis ke stepMapel.)
         mulaiCapturePeriodik();
         muatDaftarMapel();
       })
@@ -538,6 +566,7 @@
         tombol.textContent = '📷 Aktifkan Kamera & Lanjutkan';
         errBox.textContent = 'Kamera tidak dapat diaktifkan (' + err.message + '). Kamera wajib dinyalakan untuk mengerjakan ujian.';
         errBox.classList.remove('hidden');
+        tulisDebug('ERROR getUserMedia: nama=' + err.name + ' pesan=' + err.message);
       });
   }
 
